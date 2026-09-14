@@ -1,5 +1,7 @@
 # 前端验证记录
 
+> 2026-09-15 更新：新版连续放映前端与现有素材已接入并完成本地联调，见 [新版前端交接与验收](frontend-screening-handoff.md)。下文保留此前的盘点/探索样例记录，不能据此判断新版仍未实现。
+
 2026-09-14，分支 `feat/wangzexuan-frontend`。此前的独立前端验证已通过；合并阶段又补充了本地 FastAPI + SQLite 的真实 HTTP 联调，见 [本地联调记录](local-integration.md)。真实 AI 与公网部署尚未验收。
 
 | 检查 | 结果 | 覆盖 |

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "shop",
+    "source": "微信图片_20260914214610_279_144.png",
+    "source_sha256": "d0b70c429d5aa727910c9fd947a19ffbf94bb3ce6544acd46ca5dba5f619da57",
+    "path": "/assets/sunny/shop.webp",
+    "bytes": 93738,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "visitor",
+    "source": "微信图片_20260914215120_299_144.png",
+    "source_sha256": "0615252b1d35db34327c813e30d39b26f30536e0ce81775ee3df6db49cfb45eb",
+    "path": "/assets/sunny/visitor.webp",
+    "bytes": 79486,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "camera",
+    "source": "微信图片_20260914215135_305_144.png",
+    "source_sha256": "d7a0f1c32357418b4ef8446b20956232e32328fae33895b858b6e16bc27374df",
+    "path": "/assets/sunny/camera.webp",
+    "bytes": 115440,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "street",
+    "source": "微信图片_20260914215138_306_144.png",
+    "source_sha256": "17be4e96463150390b88d114652c61e485637bd64a8fe64873f2d90068715977",
+    "path": "/assets/sunny/street.webp",
+    "bytes": 288978,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "school",
+    "source": "微信图片_20260914215140_307_144.png",
+    "source_sha256": "5583ce18c66b0cf7a05b56a4e8dc301a7ea90102590811e267629056987dd05f",
+    "path": "/assets/sunny/school.webp",
+    "bytes": 283800,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "photo",
+    "source": "微信图片_20260914215143_308_144.png",
+    "source_sha256": "4f9a169d41a031718e0c4f2f37bc41a9fc6d6a77122de302a54b440a9b2520a7",
+    "path": "/assets/sunny/photo.webp",
+    "bytes": 220422,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "note",
+    "source": "微信图片_20260914215145_309_144.png",
+    "source_sha256": "cf968daeb70abbe897c33bc84a504dfdd2d4b38d3d61982757584226ca9003f6",
+    "path": "/assets/sunny/note.webp",
+    "bytes": 189440,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "reunion",
+    "source": "微信图片_20260914215034_292_144.png",
+    "source_sha256": "e9e13e1566fbb6e78766da52969c6f5e39f46c804a82aa4744ed3882d65e40a6",
+    "path": "/assets/sunny/reunion.webp",
+    "bytes": 219802,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "bookshop",
+    "source": "微信图片_20260914214822_287_144.png",
+    "source_sha256": "a2b1023e75f55cab76db6533a4c0aa11332d9b2bc28685548b4b98722e6a2843",
+    "path": "/assets/sunny/bookshop.webp",
+    "bytes": 192752,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "sunset",
+    "source": "微信图片_20260914214826_288_144.png",
+    "source_sha256": "6810fa05279ab926c6152fc321617d78f6a7b7880be6b7534614f6ff64a2425a",
+    "path": "/assets/sunny/sunset.webp",
+    "bytes": 208618,
+    "status": "frontend-proposal"
+  },
+  {
+    "id": "ending",
+    "source": "微信图片_20260914215105_293_144.png",
+    "source_sha256": "0ffa542fe8b1f0b97f948e89b4495a06f90e68e726e7189344e0d887c6921bf1",
+    "path": "/assets/sunny/ending.webp",
+    "bytes": 261978,
+    "status": "frontend-proposal"
+  }
+]

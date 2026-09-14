@@ -1,6 +1,9 @@
 import { z } from "zod";
 import {
   GameError,
+  healthSchema,
+  screeningSchema,
+  collectionSchema,
   pageSchema,
   stateSchema,
   storySchema,
@@ -54,6 +57,7 @@ export class HttpGateway implements Gateway {
             parsed.data.error.code,
             parsed.data.error.message,
             parsed.data.error.trace_id ?? undefined,
+            Number(response.headers.get("Retry-After")) || undefined,
           );
         throw new GameError(
           `HTTP_${response.status}`,
@@ -78,6 +82,15 @@ export class HttpGateway implements Gateway {
     } finally {
       clearTimeout(timer);
     }
+  }
+  health() {
+    return this.request("/health", healthSchema);
+  }
+  screening(token: string) {
+    return this.request("/api/screening", screeningSchema, token);
+  }
+  collection(token: string) {
+    return this.request("/api/collection", collectionSchema, token);
   }
   story() {
     return this.request("/api/story", storySchema);
@@ -115,7 +128,26 @@ export class HttpGateway implements Gateway {
           message: action.message,
         });
       case "collect":
-        return this.request("/api/collection", stateSchema, token, body);
+        return this.request("/api/collection", stateSchema, token, {
+          ...body,
+          ...(action.confirm ? { confirm: true } : {}),
+        });
+      case "screening_start":
+        return this.request("/api/screening/start", stateSchema, token, {
+          ...body,
+          confirm: true,
+        });
+      case "screening_progress":
+        return this.request("/api/screening/progress", stateSchema, token, {
+          ...body,
+          run_id: action.run_id,
+          segment_id: action.segment_id,
+        });
+      case "screening_resume":
+        return this.request("/api/screening/resume", stateSchema, token, {
+          ...body,
+          run_id: action.run_id,
+        });
       case "read":
         return this.request(
           `/api/pages/${encodeURIComponent(action.page_id)}/read`,

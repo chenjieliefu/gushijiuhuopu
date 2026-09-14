@@ -1,6 +1,7 @@
 import { HttpGateway } from "./http";
 import { MockGateway } from "./mock";
-export const gateway =
+import type { Gateway } from "./contract";
+export const gateway: Gateway =
   import.meta.env.VITE_TRANSPORT === "http"
     ? new HttpGateway(
         import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000",

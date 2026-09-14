@@ -29,6 +29,8 @@ import { gateway, storagePrefix } from "./services";
 import { MockGateway } from "./services/mock";
 import { source } from "./data/chapter";
 import type { StoryPage } from "./services/contract";
+import { FormalExperience } from "./components/FormalExperience";
+import { screeningArt } from "./data/screening-art";
 import { useGame } from "./useGame";
 
 type Panel =
@@ -180,6 +182,14 @@ export default function App() {
         )}
     </>
   );
+  if (
+    state &&
+    (meta?.flow === "screening" ||
+      (state.phase &&
+        state.phase !== "exploration" &&
+        state.story_id === "lost-sunshine"))
+  )
+    return <FormalExperience game={game} />;
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -259,13 +269,19 @@ export default function App() {
             </p>
           </div>
           <div className="welcome-scene">
-            <ShopScene
-              collected={false}
-              expression="neutral"
-              busy={busy}
-              onInspect={() => void game.start()}
-              onCollection={() => setPanel("collection")}
-            />
+            <div className="formal-welcome-art">
+              <img src={screeningArt.shop} alt="阳光照进故事旧货铺" />
+              <img
+                className="welcome-visitor"
+                src={screeningArt.visitor}
+                alt="带着故事而来的看山"
+              />
+              <img
+                className="welcome-camera"
+                src={screeningArt.camera}
+                alt="一台木质老式相机"
+              />
+            </div>
             <div className="paper-tag">
               <span>今日来访</span>
               <strong>遗失的晴天</strong>

@@ -85,6 +85,11 @@ export class MockGateway implements Gateway {
         "这次回应没能送达。你的输入已保留，可以重试。",
       );
     }
+    if (request.action.type.startsWith("screening_"))
+      throw new GameError(
+        "SCREENING_UNAVAILABLE",
+        "旧探索样例不支持连续放映，请连接正式章节服务。",
+      );
     const store = this.load(token);
     const signature = JSON.stringify(request);
     const result = store.results[request.request_id];
