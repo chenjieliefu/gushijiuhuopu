@@ -2,7 +2,7 @@
 
 ## 当前接入
 
-通过 `https://api.openai-next.com/v1/chat/completions` 使用 `gpt-5.6-sol`。该地址是用户提供的 OpenAI 兼容服务。密钥只从后端环境变量读取，本机保存在被 Git 忽略的 `.env.ai`，权限 600。
+通过用户提供的 `api.openai-next.com` 服务使用 `gemini-3.8-flash`，生产配置采用 Gemini 原生 `generateContent` 协议和 minimal 思考级别。保留 OpenAI 兼容协议作为可配置适配器。密钥只从后端环境变量读取，本机保存在被 Git 忽略的 `.env.ai`，权限 600。
 
 ## 提示词
 
@@ -29,3 +29,11 @@
 ## 验收
 
 已验证：物件相关自由提问、放映前防剧透、放映后身份与主题解释、缺失病名和人名不编造、无关写代码请求、混合请求及提示词覆盖要求。自动测试覆盖材料范围、固定拒绝语、无效事实引用、独立审校、语音会话范围和前端语音取消。
+
+## 2026-09-15 换模与速度优化
+
+- `AI_MODEL=gemini-3.8-flash`，`AI_API_PROTOCOL=gemini`。
+- 复用连接；使用结构化返回，保留两次模型调用的剧情审校；兼容外层 JSON 代码块，但不接受截断结果。
+- 对当前阶段完全匹配的已编写提问直接返回剧情台词；追加文字或混合任务仍进入模型检查。
+- 本机小样本实测：自由问答 4.05–7.48 秒，无关问题 1.14–2.40 秒，预置问题无需模型等待。这不是生产延迟承诺，也不能据此断言所有问题都比旧模型快。
+- 相关文档：https://ai.google.dev/gemini-api/docs/openai 、 https://ai.google.dev/gemini-api/docs/thinking 。

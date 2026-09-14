@@ -59,6 +59,9 @@ class Game:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        close_provider = getattr(self.ai, 'aclose', None)
+        if close_provider is not None:
+            await close_provider()
 
     async def _execute(self, token: str, operation: str, command: Command, page_id: str | None) -> State:
         state = await asyncio.to_thread(self.store.get, token)

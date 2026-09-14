@@ -31,3 +31,7 @@ npm run dev:screening
 固定配音可直接播放。动态 AI 配音当前使用本机独立语音服务，生产环境需另行配置。密钥、数据库、原始参考录音与本地模型环境不在仓库内。
 
 当前分支为 `feat/frontend-screening`，通过 [PR #6](https://github.com/chenjieliefu/gushijiuhuopu/pull/6) 交付团队。公网部署仍待完成；GitHub 上传并不代表网站已上线。
+
+### 火山引擎部署准备（2026-09-15）
+
+当前 AI 已改为 Gemini 3.8 Flash。新增前后端同源入口 `app.web:app`、私有 TOS 存档及静态资源缓存。云端存档已验证完整首章、实例替换恢复、重新体验保留收藏。应用尚未创建或发布，等待新增计费资源确认。详见 [火山引擎部署记录](docs/2026-09-15-火山引擎部署准备.md)。

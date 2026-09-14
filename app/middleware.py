@@ -29,7 +29,8 @@ class RequestContextMiddleware:
                 status = message['status']
                 headers = MutableHeaders(scope=message)
                 headers['X-Request-ID'] = trace
-                headers['Cache-Control'] = 'no-store'
+                if scope['path'].startswith('/api/') or scope['path'] in {'/', '/health'}:
+                    headers['Cache-Control'] = 'no-store'
             await send(message)
         try:
             await self.app(scope, receive, traced_send)

@@ -8,6 +8,7 @@ dependencies = [
   "pydantic==2.13.4",
   "uvicorn==0.48.0",
   "httpx==0.28.1",
+  "tos>=2.9,<3",
 ]
 
 [dependency-groups]

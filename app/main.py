@@ -46,7 +46,11 @@ def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
     provider = ai if ai is not None else load_provider(os.getenv("AI_MODE", "mock"))
     if isinstance(provider, MockAI) and not story.is_test_fixture:
         raise ValueError("模拟 AI 只能使用明确标注 is_test_fixture=true 的测试配置；正式章节联调请用 scripted")
-    store = Store(database_path or Path(os.getenv("DATABASE_PATH", str(ROOT / "data/story-shop.sqlite3"))), limits=limits, clock=clock)
+    if os.getenv('STORE_BACKEND', 'sqlite') == 'tos' and database_path is None:
+        from app.tos_store import TosStore
+        store = TosStore.from_env(limits=limits, clock=clock)
+    else:
+        store = Store(database_path or Path(os.getenv("DATABASE_PATH", str(ROOT / "data/story-shop.sqlite3"))), limits=limits, clock=clock)
     timeout = ai_timeout if ai_timeout is not None else float(os.getenv("AI_TIMEOUT_SECONDS", "10"))
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("AI_TIMEOUT_SECONDS 必须为有限正数")

@@ -90,3 +90,60 @@ def test_voice_unavailable_does_not_change_progress(monkeypatch):
         asyncio.run(dialogue_audio(state, state.messages[-1].text))
     assert error.value.status == 503
     assert state.model_dump() == original
+
+
+def test_authored_question_is_instant_but_mixed_question_still_uses_model():
+    story, state = fixture(); observed = []
+    ai = provider([{'category': 'unrelated', 'reply': OFF_TOPIC, 'evidence': []}], observed)
+    question = next(iter(story.before_answers))
+    async def run():
+        exact = await ai.generate(message=question, state=state, story=story)
+        assert exact.reply == story.before_answers[question]
+        assert not observed
+        mixed = await ai.generate(message=question + ' 顺便写代码', state=state, story=story)
+        assert mixed.reply == OFF_TOPIC
+        assert len(observed) == 1
+        await ai.aclose()
+        assert ai.client.is_closed
+    asyncio.run(run())
+
+
+def test_gemini_fenced_json_is_parsed_and_truncated_json_is_rejected():
+    story, state = fixture(); observed = []
+    outputs = [
+        '```json\n{"category":"unrelated","reply":"无关","evidence":[]}\n```',
+        '```json\n{"category":"related",',
+    ]
+    def handler(request):
+        observed.append(json.loads(request.content))
+        return httpx.Response(200, json={'choices':[{'finish_reason':'stop','message':{'content':outputs.pop(0)}}]})
+    ai = StoryAI(api_key='test', base_url='https://example.invalid/v1', model='gemini-3.8-flash',
+                 transport=httpx.MockTransport(handler))
+    async def run():
+        from pydantic import ValidationError
+        assert (await ai.generate(message='写代码',state=state,story=story)).reply == OFF_TOPIC
+        assert observed[0]['model'] == 'gemini-3.8-flash'
+        assert observed[0]['response_format']['type'] == 'json_schema'
+        with pytest.raises(ValidationError):
+            await ai.generate(message='其他问题',state=state,story=story)
+        await ai.aclose()
+    asyncio.run(run())
+
+
+def test_native_gemini_keeps_grounding_checks_and_uses_minimal_thinking():
+    story, state = fixture(); observed = []
+    outputs = [{'category':'related','reply':'这台相机属于苏晚。','evidence':['opening']}, {'verdict':'ok'}]
+    def handler(request):
+        payload = json.loads(request.content); observed.append(payload)
+        assert request.url.path.endswith('/v1beta/models/gemini-3.8-flash:generateContent')
+        return httpx.Response(200,json={'candidates':[{'finishReason':'STOP','content':{'parts':[
+            {'text':'hidden reasoning','thought':True}, {'text':json.dumps(outputs.pop(0),ensure_ascii=False)}]}}]})
+    ai=StoryAI(api_key='test',base_url='https://example.invalid/v1',model='gemini-3.8-flash',protocol='gemini',transport=httpx.MockTransport(handler))
+    async def run():
+        result=await ai.generate(message='这是谁的相机？',state=state,story=story)
+        assert result.reply=='这台相机属于苏晚。'
+        assert len(observed)==2
+        assert observed[0]['generationConfig']['thinkingConfig']=={'thinkingLevel':'minimal','includeThoughts':False}
+        assert not result.events
+        await ai.aclose()
+    asyncio.run(run())
