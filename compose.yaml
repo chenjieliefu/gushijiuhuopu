@@ -1,0 +1,15 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_PATH: /app/data/story-shop.sqlite3
+      AI_MODE: mock
+      AI_TIMEOUT_SECONDS: 10
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+    volumes:
+      - story-data:/app/data
+    restart: unless-stopped
+volumes:
+  story-data:
