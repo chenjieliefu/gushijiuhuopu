@@ -2,7 +2,8 @@
 // Backend asset_id remains untouched; unknown chapters/revisions use a neutral paper frame.
 const asset = (id: string) => `/assets/sunny/${id}.webp`;
 export const screeningArt = {
-  shop: asset("shop"),
+  shop: "/assets/sunny/shop-tidy.png",
+  shopCollected: "/assets/sunny/shop-collected.png",
   visitor: asset("visitor"),
   camera: asset("camera"),
   street: asset("street"),

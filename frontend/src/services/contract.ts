@@ -125,8 +125,14 @@ export type Action =
   | { type: "read"; page_id: string }
   | { type: "collect"; confirm?: true }
   | { type: "screening_start"; confirm: true }
-  | { type: "screening_progress"; run_id: string; segment_id: string }
+  | {
+      type: "screening_progress";
+      run_id: string;
+      segment_id: string;
+      advance_mode?: "manual";
+    }
   | { type: "screening_resume"; run_id: string }
+  | { type: "replay"; confirm: true }
   | { type: "reset"; confirm: true };
 export type Request = {
   session_id?: string;
@@ -137,6 +143,7 @@ export type Request = {
 export interface Gateway {
   mode: "mock" | "http";
   health?(): Promise<Health>;
+  voice?(token: string, text: string, signal: AbortSignal): Promise<Blob>;
   screening?(token: string): Promise<ScreeningView>;
   collection?(token: string): Promise<Collection>;
   story(): Promise<StoryMeta>;

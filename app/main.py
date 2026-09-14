@@ -10,7 +10,7 @@ from typing import Annotated
 
 from fastapi import Depends
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.exceptions import HTTPException
 
@@ -22,6 +22,7 @@ from app.models import (ChatCommand, CollectCommand, Collection, Command, Confir
                         ResetCommand, ScreeningProgressCommand, ScreeningResumeCommand, ScreeningView, SessionCreated, State, Story)
 from app.service import Game
 from app.store import Store
+from app.voice import VoiceRequest, dialogue_audio
 
 ROOT = Path(__file__).resolve().parent.parent
 security = HTTPBearer(auto_error=False)
@@ -149,6 +150,12 @@ def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
     async def chat(command: ChatCommand, token: Token):
         return await game.execute(token, "chat", command)
 
+    @app.post('/api/voice', tags=['游戏操作'])
+    async def voice(command: VoiceRequest, token: Token):
+        state = await asyncio.to_thread(store.get, token)
+        game.check_story(state)
+        return Response(await dialogue_audio(state, command.text), media_type='audio/mpeg')
+
     @app.get("/api/pages/{page_id}", response_model=Page, tags=["故事"])
     def page(page_id: str, token: Token):
         state = store.get(token)
@@ -169,6 +176,10 @@ def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
     @app.post("/api/reset", response_model=State, tags=["会话"])
     async def reset(command: ResetCommand, token: Token):
         return await game.execute(token, "reset", command)
+
+    @app.post('/api/replay', response_model=State, tags=['会话'])
+    async def replay(command: ConfirmCommand, token: Token):
+        return await game.execute(token, 'replay', command)
 
     @app.post("/api/screening/start", response_model=State, tags=["放映"])
     async def start_screening(command: ConfirmCommand, token: Token):

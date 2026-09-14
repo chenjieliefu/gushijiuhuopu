@@ -11,7 +11,7 @@ import {
   type Request,
 } from "./contract";
 
-// Validated against the local FastAPI test fixture; real AI and hosted deployment remain pending.
+// All model credentials stay on the backend.
 export class HttpGateway implements Gateway {
   mode = "http" as const;
   constructor(
@@ -23,9 +23,10 @@ export class HttpGateway implements Gateway {
     schema: z.ZodType<T>,
     token?: string,
     body?: unknown,
+    timeout = this.timeout,
   ): Promise<T> {
     const abort = new AbortController();
-    const timer = setTimeout(() => abort.abort(), this.timeout);
+    const timer = setTimeout(() => abort.abort(), timeout);
     try {
       const response = await fetch(
         `${this.baseUrl.replace(/\/$/, "")}${path}`,
@@ -86,6 +87,22 @@ export class HttpGateway implements Gateway {
   health() {
     return this.request("/health", healthSchema);
   }
+  async voice(token: string, text: string, signal: AbortSignal) {
+    const response = await fetch(
+      `${this.baseUrl.replace(/\/$/, "")}/api/voice`,
+      {
+        method: "POST",
+        signal: AbortSignal.any([signal, AbortSignal.timeout(48000)]),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      },
+    );
+    if (!response.ok) throw new Error("Voice unavailable");
+    return response.blob();
+  }
   screening(token: string) {
     return this.request("/api/screening", screeningSchema, token);
   }
@@ -123,10 +140,16 @@ export class HttpGateway implements Gateway {
           target_id: action.target_id,
         });
       case "chat":
-        return this.request("/api/chat", stateSchema, token, {
-          ...body,
-          message: action.message,
-        });
+        return this.request(
+          "/api/chat",
+          stateSchema,
+          token,
+          {
+            ...body,
+            message: action.message,
+          },
+          50000,
+        );
       case "collect":
         return this.request("/api/collection", stateSchema, token, {
           ...body,
@@ -142,6 +165,7 @@ export class HttpGateway implements Gateway {
           ...body,
           run_id: action.run_id,
           segment_id: action.segment_id,
+          ...(action.advance_mode ? { advance_mode: action.advance_mode } : {}),
         });
       case "screening_resume":
         return this.request("/api/screening/resume", stateSchema, token, {
@@ -157,6 +181,11 @@ export class HttpGateway implements Gateway {
         );
       case "reset":
         return this.request("/api/reset", stateSchema, token, {
+          ...body,
+          confirm: true,
+        });
+      case "replay":
+        return this.request("/api/replay", stateSchema, token, {
           ...body,
           confirm: true,
         });

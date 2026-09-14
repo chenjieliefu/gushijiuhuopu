@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { readFileSync, mkdirSync } from "node:fs";
 const story = JSON.parse(
   readFileSync(
@@ -9,7 +9,16 @@ const story = JSON.parse(
 const evidence =
   process.env.FRONTEND_EVIDENCE_DIR || "test-results/screening-evidence";
 mkdirSync(evidence, { recursive: true });
-test("formal chapter: all 51 real-time captions, independent consignment, collection and reset", async ({
+async function advanceLine(page: Page) {
+  const reveal = page.getByRole("button", {
+    name: "显示完整对白",
+    exact: true,
+  });
+  if (await reveal.isVisible()) await reveal.click();
+  await page.getByRole("button", { name: "下一句", exact: true }).click();
+}
+
+test("formal chapter: all 51 click-driven captions, independent consignment, collection and reset", async ({
   page,
 }, info) => {
   const errors: string[] = [];
@@ -31,12 +40,15 @@ test("formal chapter: all 51 real-time captions, independent consignment, collec
       failures.push(`${r.status()} ${new URL(r.url()).pathname}`);
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "推门营业" }).click();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
   await expect(
     page.getByRole("heading", { name: "遗失的晴天。" }),
   ).toBeVisible();
   await expect(
-    page.getByText("固定问答体验 · 自由 AI 待接入", { exact: false }),
+    page.getByText("自动保存 · 固定问答", { exact: false }),
   ).toBeVisible();
   await page.screenshot({
     path: `${evidence}/${info.project.name}-counter.png`,
@@ -46,9 +58,10 @@ test("formal chapter: all 51 real-time captions, independent consignment, collec
   await expect(page.getByRole("dialog")).toContainText("已经擦拭过");
   await page.getByRole("button", { name: "返回店铺", exact: true }).click();
   const draft = page.getByRole("textbox", { name: "向看山提问" });
+  await page.getByRole("button", { name: "我想问…", exact: true }).click();
   await draft.fill("这是寄展，还是想卖给我？");
   await page.getByRole("button", { name: "发送问题" }).click();
-  await expect(draft).toHaveValue("");
+  await expect(draft).toHaveCount(0);
   await page.getByRole("button", { name: "听听故事", exact: true }).click();
   const caption = page.getByTestId("film-caption");
   for (const [i, segment] of story.screening.segments.entries()) {
@@ -58,12 +71,18 @@ test("formal chapter: all 51 real-time captions, independent consignment, collec
     await expect(caption.locator("p")).toHaveText(segment.text);
     observed.push(segment.id);
     await expect(page.getByRole("textbox")).toHaveCount(0);
-    await expect(page.getByRole("button")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "声音设置" })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollHeight <= innerHeight,
+      ),
+    ).toBe(true);
     if (i === 0 || i === 21 || i === 48)
       await page.screenshot({
         path: `${evidence}/${info.project.name}-${segment.id}.png`,
         fullPage: true,
       });
+    await advanceLine(page);
   }
   await expect(
     page.getByRole("button", { name: "谈谈寄展", exact: true }),
@@ -72,9 +91,10 @@ test("formal chapter: all 51 real-time captions, independent consignment, collec
     story.screening.segments.map((s: { id: string }) => s.id),
   );
   expect(observed).toHaveLength(51);
+  await page.getByRole("button", { name: "我想问…", exact: true }).click();
   await draft.fill("我愿意收");
   await page.getByRole("button", { name: "发送问题" }).click();
-  await expect(draft).toHaveValue("");
+  await expect(draft).toHaveCount(0);
   expect(collects).toBe(0);
   await page.getByRole("button", { name: "谈谈寄展", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText("苏晚");
@@ -88,22 +108,65 @@ test("formal chapter: all 51 real-time captions, independent consignment, collec
     page.getByRole("heading", { name: "故事有了归处。" }),
   ).toBeVisible();
   expect(collects).toBe(1);
-  await page.getByRole("button", { name: "翻开收藏册", exact: true }).click();
+  await page.getByRole("button", { name: "返回主页", exact: true }).click();
   await expect(
-    page.getByRole("article", { name: "收藏故事全文" }).locator("p"),
-  ).toHaveCount(51);
+    page.getByRole("heading", { name: "每一件旧物，都有话想说。" }),
+  ).toBeVisible();
+  await expect(page.locator('.story-home img[src*="camera"]')).toHaveCount(0);
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await expect(page.getByText("本次体验收录《遗失的晴天》。")).toBeVisible();
+  await expect(page.getByText("天黑前的音乐盒")).toHaveCount(0);
+  await page.reload();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page.getByRole("button", { name: "重新体验", exact: true }).click();
   await expect(
-    page.getByRole("article", { name: "收藏故事全文" }).locator("p").last(),
-  ).toHaveText(story.full_text.at(-1));
+    page.getByRole("button", { name: "听听故事", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /^收藏/ }).click();
+  await expect(page.getByText("已收录 1 件旧物")).toBeVisible();
+  await expect(page.getByRole("article", { name: "收藏故事全文" })).toHaveCount(
+    0,
+  );
+  await page.getByRole("button", { name: "翻开相机介绍" }).click();
+  await page.getByRole("button", { name: "翻阅完整故事" }).click();
+  for (let i = 0; i < Math.ceil(story.full_text.length / 2); i++) {
+    const text = page
+      .getByRole("article", { name: "收藏故事全文" })
+      .locator("p");
+    await expect(text).toHaveText(story.full_text.slice(i * 2, i * 2 + 2));
+    if (i < Math.ceil(story.full_text.length / 2) - 1)
+      await page.getByRole("button", { name: "下一页", exact: true }).click();
+  }
+  await expect(
+    page.getByRole("button", { name: "下一页", exact: true }),
+  ).toBeDisabled();
   await page.screenshot({
     path: `${evidence}/${info.project.name}-collection.png`,
   });
   await page.getByRole("button", { name: "返回店铺", exact: true }).click();
   await page.reload();
-  await page.getByRole("button", { name: "继续上次的故事" }).click();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "遗失的晴天。" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "听听故事", exact: true }).click();
+  for (const segment of story.screening.segments) {
+    await expect(page.getByTestId("film-caption")).toHaveAttribute(
+      "data-segment",
+      segment.id,
+    );
+    await advanceLine(page);
+  }
+  await page.getByRole("button", { name: "结束本次体验", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "故事有了归处。" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "翻开收藏册", exact: true }).click();
+  await expect(page.getByText("已收录 1 件旧物")).toBeVisible();
+  await page.getByRole("button", { name: "返回店铺", exact: true }).click();
   await page.getByRole("button", { name: "重新开始", exact: true }).click();
   await page.getByRole("button", { name: "确认重新开始", exact: true }).click();
   await expect(
@@ -129,13 +192,21 @@ test("response loss + reload replays pending UUID before resume, without skippin
     } else await route.continue();
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "推门营业" }).click();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
   await page.getByRole("button", { name: "听听故事", exact: true }).click();
+  await page.getByTestId("film-caption").waitFor({ state: "visible" });
+  await advanceLine(page);
   await expect(
     page.getByRole("button", { name: "重试这次操作", exact: true }),
   ).toBeVisible({ timeout: 25000 });
   await page.reload();
-  await page.getByRole("button", { name: "继续上次的故事" }).click();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
   await expect(page.getByRole("region", { name: "恢复放映" })).toBeVisible();
   await page.getByRole("button", { name: "重试这次操作", exact: true }).click();
   await expect(
@@ -148,7 +219,10 @@ test("response loss + reload replays pending UUID before resume, without skippin
     "FILM002",
   );
   await page.reload();
-  await page.getByRole("button", { name: "继续上次的故事" }).click();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
   await page.getByRole("button", { name: "继续放映", exact: true }).click();
   await expect(page.getByTestId("film-caption")).toHaveAttribute(
     "data-segment",
@@ -161,7 +235,10 @@ test("opening choices, rate cooldown and stopped asset load do not advance the s
   page,
 }, info) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "推门营业" }).click();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "你和苏晚是什么关系？" }),
   ).toBeVisible();
@@ -194,6 +271,7 @@ test("opening choices, rate cooldown and stopped asset load do not advance the s
       });
     } else await route.continue();
   });
+  await page.getByRole("button", { name: "我想问…", exact: true }).click();
   await page
     .getByRole("textbox", { name: "向看山提问" })
     .fill("你和苏晚是什么关系？");
@@ -230,7 +308,10 @@ test("a second tab invalidates the old player; sync requires resume rather than 
   context,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "推门营业" }).click();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
   await page.getByRole("button", { name: "听听故事", exact: true }).click();
   await expect(page.getByTestId("film-caption")).toHaveAttribute(
     "data-segment",
@@ -238,12 +319,16 @@ test("a second tab invalidates the old player; sync requires resume rather than 
   );
   const other = await context.newPage();
   await other.goto("/");
-  await other.getByRole("button", { name: "继续上次的故事" }).click();
+  await other.getByRole("button", { name: "选择故事", exact: true }).click();
+  await other
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
   await other.getByRole("button", { name: "继续放映", exact: true }).click();
   await expect(other.getByTestId("film-caption")).toHaveAttribute(
     "data-segment",
     "FILM001",
   );
+  await advanceLine(page);
   await expect(
     page.getByRole("button", { name: "同步已保存进度", exact: true }),
   ).toBeVisible({ timeout: 25000 });
@@ -259,4 +344,53 @@ test("a second tab invalidates the old player; sync requires resume rather than 
     "data-segment",
     /FILM00[12]/,
   );
+});
+
+test("manual reading waits for input, reveals before advancing, and offers optional auto/history", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
+  await page.getByRole("button", { name: "听听故事", exact: true }).click();
+  const caption = page.getByTestId("film-caption");
+  await expect(caption).toHaveAttribute("data-segment", "FILM001");
+  if (
+    await page
+      .getByRole("button", { name: "显示完整对白", exact: true })
+      .isVisible()
+  ) {
+    await page
+      .getByRole("button", { name: "显示完整对白", exact: true })
+      .click();
+    await expect(caption).toHaveAttribute("data-segment", "FILM001");
+    await expect(caption.locator("p")).toHaveAttribute("data-complete", "true");
+  }
+  await page.waitForTimeout(8000);
+  await expect(caption).toHaveAttribute("data-segment", "FILM001");
+  await advanceLine(page);
+  await expect(caption).toHaveAttribute("data-segment", "FILM002");
+  await page.getByRole("button", { name: "查看已读记录" }).click();
+  await expect(page.locator(".vn-backlog article")).toHaveCount(2);
+  await page.getByRole("button", { name: "返回店铺", exact: true }).click();
+  await page.getByRole("button", { name: "隐藏对白" }).click();
+  await page.keyboard.press("h");
+  await expect(caption).toHaveAttribute("aria-hidden", "false");
+  await page.getByRole("button", { name: "自动播放", exact: true }).click();
+  await expect(caption).toHaveAttribute("data-segment", "FILM003", {
+    timeout: 25000,
+  });
+  await page.getByRole("button", { name: "自动播放", exact: true }).click();
+  await page.reload();
+  await page.getByRole("button", { name: "选择故事", exact: true }).click();
+  await page
+    .getByRole("button", { name: /进入故事|继续故事/, exact: true })
+    .click();
+  await page.getByRole("button", { name: "继续放映", exact: true }).click();
+  await expect(caption).toHaveAttribute("data-segment", "FILM003");
+  await expect(
+    page.getByRole("button", { name: "自动播放", exact: true }),
+  ).toHaveAttribute("aria-pressed", "false");
 });

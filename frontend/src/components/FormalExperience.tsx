@@ -14,8 +14,13 @@ import { screeningArt, preloadFilm } from "../data/screening-art";
 import { type Collection } from "../services/contract";
 import type { useGame } from "../useGame";
 import { Dialog } from "./Dialog";
+import { CollectionAlbum } from "./CollectionAlbum";
 import { ScreeningPlayer } from "./ScreeningPlayer";
 import "./formal.css";
+import "./immersive.css";
+import { SoundControls } from "./SoundControls";
+import { RevealedLine, type RevealedLineHandle } from "./RevealedLine";
+import { useAtmosphere, useVoice, speak, stopVoice } from "../audio/atmosphere";
 
 type Game = ReturnType<typeof useGame>;
 type Panel =
@@ -27,8 +32,35 @@ type Panel =
   | "recovery"
   | "help"
   | null;
-export function FormalExperience({ game }: { game: Game }) {
+export function FormalExperience({
+  game,
+  onHome,
+  onChooseStory,
+}: {
+  game: Game;
+  onHome: () => void;
+  onChooseStory: () => void;
+}) {
   const { state, meta, busy, error, failed, draft, health } = game;
+  const sound = useAtmosphere();
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [dialogueIndex, setDialogueIndex] = useState(0);
+  const dialogueLine = useRef<RevealedLineHandle>(null);
+  const dialogueText =
+    state?.phase === "completed"
+      ? "谢谢老板，我会把这件事告诉苏晚。那我先告辞了。"
+      : state?.messages.at(-1)?.text || "";
+  const dialoguePages = Array.from(
+    dialogueText.match(/.{1,115}(?:[，。！？、；：”]|$)|.{1,115}/gu) || [
+      dialogueText,
+    ],
+  );
+  const pageText =
+    dialoguePages[Math.min(dialogueIndex, dialoguePages.length - 1)] || "";
+  useEffect(() => {
+    setDialogueIndex(0);
+  }, [dialogueText]);
+  useVoice(pageText, state?.phase !== "screening", "kanshan", game.getVoice);
   const [panel, setPanel] = useState<Panel>(null);
   const [target, setTarget] = useState("camera_front");
   const [localError, setLocalError] = useState("");
@@ -63,7 +95,7 @@ export function FormalExperience({ game }: { game: Game }) {
   const changed =
     state.story_id !== meta.id || state.story_version !== meta.version;
   const blocked = busy || !!failed || preparing || changed || !!error;
-  const last = state.messages.at(-1);
+
   const mode =
     health?.ai_mode === "custom"
       ? "AI 对话模式"
@@ -106,6 +138,8 @@ export function FormalExperience({ game }: { game: Game }) {
   async function begin() {
     if (gate.current || blocked) return;
     gate.current = true;
+    stopVoice();
+    setComposeOpen(false);
     setPreparing(true);
     setLocalError("");
     const expected = stateRef.current;
@@ -123,7 +157,8 @@ export function FormalExperience({ game }: { game: Game }) {
   async function ask(text = draft) {
     if (blocked || !text.trim()) return;
     game.setDraft(text);
-    await game.run({ type: "chat", message: text.trim() });
+    if (await game.run({ type: "chat", message: text.trim() }))
+      setComposeOpen(false);
   }
   async function inspect(id: string) {
     setTarget(id);
@@ -210,7 +245,9 @@ export function FormalExperience({ game }: { game: Game }) {
       </div>
     ) : null;
   return (
-    <div className="formal-experience">
+    <div
+      className={`formal-experience immersive-game ${completed ? "chapter-complete" : ""}`}
+    >
       {playing ? (
         <>
           <ScreeningPlayer
@@ -224,125 +261,174 @@ export function FormalExperience({ game }: { game: Game }) {
           <header className="formal-header">
             <a
               href="#"
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                onHome();
+              }}
               className="formal-brand"
             >
-              <Feather size={22} />
+              <Feather size={21} />
               <span>
                 故事旧货铺<small>THE STORY SHOP</small>
               </span>
             </a>
             <nav aria-label="店铺导航">
+              <button onClick={onChooseStory}>
+                <BookOpen size={16} />
+                <span>故事选择</span>
+              </button>
               <button
-                disabled={!completed}
+                disabled={!state.collection}
                 onClick={() => void showCollection()}
               >
-                <BookOpen size={17} />
-                收藏册 <small>{completed ? "01" : "00"}</small>
+                <BookOpen size={16} />
+                <span>收藏</span>
+                <small>{state.collection ? "01" : "00"}</small>
               </button>
-              <button onClick={() => setPanel("help")}>关于这次来访</button>
+              <SoundControls />
+              <button
+                aria-label="关于这次来访"
+                onClick={() => setPanel("help")}
+              >
+                ···
+              </button>
             </nav>
           </header>
           <main className="formal-main">
             <div className="formal-chapter">
-              <div>
-                <p className="eyebrow">第一件旧物 / 苏晚的相机</p>
-                <h1>
-                  {completed ? "故事有了归处。" : "遗失的晴天"}
-                  <span>{completed ? "" : "。"}</span>
-                </h1>
-              </div>
-              <p className="chapter-aside">
+              <p className="eyebrow">CHAPTER 01 · 一台相机，一段时光</p>
+              <h1>{completed ? "故事有了归处。" : "遗失的晴天。"}</h1>
+              <span className="chapter-caption">
                 {completed
-                  ? "旧物入店，故事入册。"
+                  ? "旧物入店，故事入册"
                   : state.phase === "after_screening"
-                    ? "灯光亮起，我们接着聊。"
-                    : "一间小店，收留时光。"}
-              </p>
+                    ? "灯光亮起，我们接着聊"
+                    : "午后 · 故事旧货铺"}
+              </span>
             </div>
             <div className="formal-stage" aria-label="旧货铺柜台">
-              <img
-                className="shop-background"
-                src={screeningArt.shop}
-                alt="暖光照进木质旧货铺，柜台与陈列架等待新的故事"
-              />
-              {(!completed || arrival) && (
+              <div className="scene-canvas">
                 <img
-                  className={`shop-visitor expression-${state.expression} ${completed ? "is-leaving" : ""}`}
-                  src={screeningArt.visitor}
-                  alt="看山，受苏晚委托而来的寄展办理人"
+                  className="shop-background"
+                  src={screeningArt.shop}
+                  alt="暖光照进旧货铺，左侧是木质收藏柜"
                 />
-              )}
-              <div className="counter-foreground" aria-hidden="true" />
-              <button
-                className={`shop-camera ${completed ? "is-shelved" : ""}`}
-                disabled={blocked}
-                onClick={() =>
-                  completed
-                    ? void showCollection()
-                    : void inspect("camera_front")
-                }
-                aria-label={completed ? "查看寄展相机" : "检查相机"}
-              >
-                <img src={screeningArt.camera} alt="木质老式相机" />
-                <span>{completed ? "遗失的晴天 · 已寄展" : "查看相机"}</span>
-              </button>
-              {!completed && (
+                <img
+                  className={`shop-background collected-background ${completed ? "is-visible" : ""}`}
+                  src={screeningArt.shopCollected}
+                  alt=""
+                  aria-hidden="true"
+                />
+                {(!completed || arrival) && (
+                  <div
+                    className={`visitor-puppet ${sound.speaking ? "is-speaking" : ""} ${completed ? "is-leaving" : ""}`}
+                  >
+                    <img
+                      className={`shop-visitor expression-${state.expression}`}
+                      src={screeningArt.visitor}
+                      alt="看山，受苏晚委托而来的寄展办理人"
+                    />
+                  </div>
+                )}
+                <div className="counter-foreground" aria-hidden="true" />
                 <button
-                  className="shop-photos"
+                  className={`shop-camera ${completed ? "is-shelved" : ""}`}
                   disabled={blocked}
-                  onClick={() => void inspect("photo_stack")}
-                  aria-label="检查照片"
+                  onClick={() =>
+                    completed
+                      ? void showCollection()
+                      : void inspect("camera_front")
+                  }
+                  aria-label={completed ? "查看寄展相机" : "检查相机"}
                 >
-                  <i />
-                  <i />
-                  <span>一叠照片</span>
+                  {!completed && (
+                    <img src={screeningArt.camera} alt="木质老式相机" />
+                  )}
+                  <span>
+                    {completed ? "01 · 遗失的晴天" : "相机 · 点击查看"}
+                  </span>
                 </button>
-              )}
-              <div className="stage-label">
-                <span className="tiny-dot" />
-                {completed ? "本次寄展已接收" : "今日来访 · 看山"}
+                {!completed && (
+                  <button
+                    className="shop-photos"
+                    disabled={blocked}
+                    onClick={() => void inspect("photo_stack")}
+                    aria-label="检查照片"
+                  >
+                    <i />
+                    <i />
+                    <span>照片</span>
+                  </button>
+                )}
+              </div>
+              <div className="world-vignette" aria-hidden="true" />
+              <div className="floating-motes" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
               </div>
             </div>
             {arrival && (
               <div className="arrival-note" role="status">
-                相机与照片已入架。看山向你道别，故事留在了这里。
+                <span>收藏 +1</span>相机轻轻落在架上，这段晴天留了下来。
               </div>
             )}
             <section className="formal-dialogue" aria-label="与看山交谈">
               <div className="dialogue-heading">
-                <span>{completed ? "寄展手记" : "看山"}</span>
-                <small>
-                  {completed ? "所有人 · 苏晚" : "受苏晚之托，带着故事而来"}
-                </small>
+                <span>{completed ? "看山 · 告别" : "看山"}</span>
+                <small>{completed ? "故事已经留在这里" : "旧物的来访者"}</small>
+                <button
+                  aria-label="重听台词"
+                  onClick={() => void speak(pageText, "kanshan", game.getVoice)}
+                >
+                  重听
+                </button>
                 <button
                   onClick={() => setPanel("history")}
                   aria-label="查看对话记录"
                 >
-                  <MessageCircle size={16} />
-                  对话手记
+                  <MessageCircle size={14} />
+                  <span>手记</span>
                 </button>
               </div>
-              <div className="current-dialogue" aria-live="polite">
-                <p>
-                  {completed
-                    ? "谢谢老板，我会把这件事告诉苏晚。那我先告辞了。"
-                    : last?.text}
-                </p>
+              <div
+                className="current-dialogue"
+                onClick={() => {
+                  if (
+                    dialogueLine.current?.reveal() &&
+                    dialogueIndex < dialoguePages.length - 1
+                  )
+                    setDialogueIndex((i) => i + 1);
+                }}
+                aria-live="polite"
+                key={`${state.messages.length}:${dialogueIndex}:${completed}`}
+              >
+                <RevealedLine ref={dialogueLine} text={pageText} />
                 {busy && game.lastAction === "chat" && (
                   <span className="reply-waiting">看山正在整理思绪…</span>
                 )}
               </div>
               {errors}
-              {completed ? (
+              {dialogueIndex < dialoguePages.length - 1 ? (
                 <div className="formal-actions">
                   <button
                     className="primary"
-                    onClick={() => void showCollection()}
+                    onClick={() => setDialogueIndex((i) => i + 1)}
                   >
-                    <BookOpen size={17} />
+                    继续听 <ArrowRight size={15} />
+                  </button>
+                </div>
+              ) : completed ? (
+                <div className="formal-actions completion-actions">
+                  <button className="primary" onClick={onHome}>
+                    返回主页 <ArrowRight size={16} />
+                  </button>
+                  <button onClick={() => void showCollection()}>
+                    <BookOpen size={16} />
                     翻开收藏册
-                    <ArrowRight size={17} />
                   </button>
                 </div>
               ) : (
@@ -355,97 +441,112 @@ export function FormalExperience({ game }: { game: Game }) {
                         onClick={() => void begin()}
                       >
                         {preparing ? (
-                          <LoaderCircle className="spin" size={17} />
+                          <LoaderCircle size={16} className="spin" />
                         ) : (
-                          <BookOpen size={17} />
+                          <BookOpen size={16} />
                         )}{" "}
-                        {preparing ? "正在准备画面…" : "听听故事"}{" "}
-                        <ArrowRight size={17} />
+                        {preparing ? "画面准备中…" : "听听故事"}
+                        <ArrowRight size={15} />
                       </button>
                     )}
-                    {questions.slice(0, 3).map((q) => (
+                    {state.phase === "after_screening" && state.can_collect && (
+                      <button
+                        className="primary"
+                        disabled={blocked}
+                        onClick={() =>
+                          state.collection ? void accept() : setPanel("accept")
+                        }
+                      >
+                        {state.collection ? "结束本次体验" : "谈谈寄展"}{" "}
+                        <ArrowRight size={15} />
+                      </button>
+                    )}
+                    {questions.slice(0, 2).map((q) => (
                       <button
                         key={q}
                         disabled={blocked}
                         onClick={() => void ask(q)}
                       >
                         {q}
-                        <ArrowRight size={14} />
                       </button>
                     ))}
-                    {state.phase === "after_screening" && state.can_collect && (
-                      <button
-                        className="primary"
-                        disabled={blocked}
-                        onClick={() => setPanel("accept")}
-                      >
-                        谈谈寄展
-                        <ArrowRight size={16} />
-                      </button>
-                    )}
-                  </div>
-                  <form
-                    className="formal-compose"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      void ask();
-                    }}
-                  >
-                    <label className="sr-only" htmlFor="formal-question">
-                      向看山提问
-                    </label>
-                    <textarea
-                      id="formal-question"
-                      rows={1}
-                      value={draft}
-                      maxLength={2000}
-                      placeholder="也可以写下你想说的话…"
-                      onChange={(e) => game.setDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "Enter" &&
-                          !e.shiftKey &&
-                          !e.nativeEvent.isComposing &&
-                          e.keyCode !== 229
-                        ) {
-                          e.preventDefault();
-                          void ask();
-                        }
-                      }}
-                    />
                     <button
-                      disabled={blocked || !draft.trim()}
-                      aria-label="发送问题"
+                      className="free-question"
+                      aria-expanded={composeOpen}
+                      onClick={() => setComposeOpen((v) => !v)}
                     >
-                      {busy ? (
-                        <LoaderCircle size={17} className="spin" />
-                      ) : (
-                        <Send size={17} />
-                      )}
+                      <Feather size={14} />
+                      我想问…
                     </button>
-                  </form>
-                  <p className="formal-input-note">
-                    {state.phase === "before_screening"
-                      ? "选择“听听故事”才会开始放映。"
-                      : "不必急着做决定，想问什么都可以。"}
-                    <span>
-                      {draft.length ? `${draft.length} / 2000` : "Enter 发送"}
-                    </span>
-                  </p>
+                  </div>
+                  {composeOpen && (
+                    <form
+                      className="formal-compose"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void ask();
+                      }}
+                    >
+                      <label className="sr-only" htmlFor="formal-question">
+                        向看山提问
+                      </label>
+                      <textarea
+                        id="formal-question"
+                        autoFocus
+                        rows={1}
+                        value={draft}
+                        maxLength={2000}
+                        placeholder="写下你想对看山说的话…"
+                        onChange={(e) => game.setDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Enter" &&
+                            !e.shiftKey &&
+                            !e.nativeEvent.isComposing &&
+                            e.keyCode !== 229
+                          ) {
+                            e.preventDefault();
+                            void ask();
+                          }
+                        }}
+                      />
+                      <button
+                        disabled={blocked || !draft.trim()}
+                        aria-label="发送问题"
+                      >
+                        {busy ? (
+                          <LoaderCircle className="spin" size={17} />
+                        ) : (
+                          <Send size={17} />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="收起输入"
+                        onClick={() => setComposeOpen(false)}
+                      >
+                        <X size={16} />
+                      </button>
+                    </form>
+                  )}
                 </>
               )}
             </section>
             <footer className="formal-footer">
               <span>
-                {mode} · 美术映射待确认
-                {meta.source?.original_verified ? "" : " · 原文来源待核对"}
+                自动保存 ·{" "}
+                {health?.ai_mode === "custom" ? "AI 对话" : "固定问答"}
               </span>
               <button onClick={() => setPanel("reset")}>
-                <RotateCcw size={13} />
+                <RotateCcw size={12} />
                 重新开始
               </button>
             </footer>
-            {game.saveNotice && <p role="alert">{game.saveNotice}</p>}
+            {game.saveNotice && (
+              <p className="save-notice" role="alert">
+                {game.saveNotice}
+              </p>
+            )}
           </main>
         </>
       )}
@@ -557,61 +658,12 @@ export function FormalExperience({ game }: { game: Game }) {
         </Dialog>
       )}
       {panel === "collection" && !playing && (
-        <Dialog
-          title={collection?.title || "收藏册"}
-          eyebrow="旧物入店 · 故事入册"
-          wide
+        <CollectionAlbum
+          collection={collection}
+          loading={collectionLoading}
+          error={localError}
           onClose={close}
-        >
-          {collectionLoading && <p role="status">正在读回收藏…</p>}
-          {localError && <p role="alert">{localError}</p>}
-          {collection && (
-            <>
-              <div className="collection-intro">
-                <img src={screeningArt.camera} alt="寄展相机" />
-                <div>
-                  <p className="eyebrow">相机与照片</p>
-                  <h3>{collection.title}</h3>
-                  <p>{collection.summary}</p>
-                  <small>
-                    所有人 {collection.owner} · 办理人 {collection.custodian} ·
-                    接收方 {collection.recipient}
-                  </small>
-                </div>
-              </div>
-              <article className="collected-text" aria-label="收藏故事全文">
-                {collection.full_text?.map((text, i) => (
-                  <p key={i}>{text}</p>
-                ))}
-              </article>
-              <div className="collection-source">
-                <p>{collection.adaptation_note}</p>
-                <p>
-                  {collection.source?.text_format === "screening_units"
-                    ? "正文保存为本版 51 个放映单元，不冒充原文段落。"
-                    : "正文按来源段落保存。"}
-                </p>
-                <p>
-                  原作者：{collection.source?.author || "待核实"} ·{" "}
-                  {collection.source?.original_verified
-                    ? "原文已核对"
-                    : "原文来源待核对"}
-                </p>
-                {collection.source?.original_url &&
-                  /^https?:\/\//.test(collection.source.original_url) && (
-                    <a
-                      href={collection.source.original_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      原文来源
-                    </a>
-                  )}
-                <p>{collection.source?.note}</p>
-              </div>
-            </>
-          )}
-        </Dialog>
+        />
       )}
       {(panel === "reset" || panel === "recovery") && (
         <Dialog
@@ -668,7 +720,8 @@ export function FormalExperience({ game }: { game: Game }) {
           <div className="inspect-description">
             <p>你是这间旧货铺的老板。看山受苏晚委托，带来相机与照片寄展。</p>
             <p>
-              准备好后点击“听听故事”，约五分多钟的故事会自动放映，期间无需操作。结束后可以继续交流，再决定是否接收寄展。
+              准备好后点击“听听故事”。默认由你点击画面或按空格、Enter
+              推进：第一下补全文字，再按一下进入下一句。也可以开启自动阅读，或查看已读记录、隐藏对白欣赏画面。音乐和配音可独立调整；故事结束后再决定是否接收寄展。
             </p>
             <p>
               {mode}。现有图片已接入，镜头映射仍待团队确认；原文来源尚在核对。

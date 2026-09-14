@@ -40,6 +40,8 @@ class ConfirmCommand(Command):
 
 
 class ScreeningProgressCommand(Command):
+    # Omitted by legacy/automatic clients, preserving their timing and fingerprints.
+    advance_mode: Literal["manual"] | None = None
     run_id: UUID
     segment_id: str = Field(min_length=1, max_length=80)
 

@@ -1,0 +1,40 @@
+name: story-shop
+services:
+  backend:
+    build:
+      context: ..
+    # Linux 服务器：后端仅绑定回环地址，Nginx 在同机代理。
+    network_mode: host
+    env_file:
+      - /opt/story-shop/shared/backend.env
+    command: ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "${STORY_SHOP_PORT:-18089}", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]
+    environment:
+      DATABASE_PATH: /app/data/story-shop.sqlite3
+      STORY_PATH: /app/stories/lost-sunshine.json
+      AI_MODE: custom
+      AI_PROVIDER_FACTORY: app.story_ai:create_provider
+      AI_TIMEOUT_SECONDS: 45
+      CORS_ORIGINS: https://gushi.zexuan-604.com
+      AI_DAILY_CALL_LIMIT: 2000
+      REQUESTS_PER_MINUTE: 180
+      SESSION_CREATES_PER_HOUR: 30
+      MAX_SESSIONS: 1000
+      MAX_DATABASE_BYTES: 536870912
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${STORY_SHOP_PORT:-18089}/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    volumes:
+      - story-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+volumes:
+  story-data:

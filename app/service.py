@@ -70,7 +70,14 @@ class Game:
             return previous
         if command.expected_version != state.version:
             raise AppError(409, 'VERSION_CONFLICT', '进度已更新，请重新读取后再操作')
-        if operation == 'reset':
+        if operation == 'replay':
+            self.check_story(state)
+            if state.phase != 'completed' or state.collection is None:
+                raise AppError(409, 'REPLAY_UNAVAILABLE', '请先完成本次故事，再重新体验')
+            collection = state.collection.model_copy(deep=True)
+            state = fresh_state(state.session_id, self.story, state.version)
+            state.collection = collection
+        elif operation == 'reset':
             state = fresh_state(state.session_id, self.story, state.version)
         else:
             self.check_story(state)
@@ -97,6 +104,8 @@ class Game:
                 self.refresh_rules(state)
                 if self.story.flow == 'screening' and command.confirm is not True:
                     raise AppError(422, 'CONFIRMATION_REQUIRED', '请通过寄展确认卡明确确认接收')
+                if state.status == 'active' and not state.can_collect:
+                    raise AppError(409, 'COLLECTION_LOCKED', '尚未满足本章节接收条件')
                 if state.collection is None:
                     if not state.can_collect:
                         raise AppError(409, 'COLLECTION_LOCKED', '尚未满足本章节接收条件')
@@ -107,8 +116,9 @@ class Game:
                         recipient=self.story.recipient, adaptation_note=self.story.adaptation_note,
                         full_text=self.story.full_text, source=self.story.source, assets=self.story.assets,
                     )
-                    state.status = 'completed'
-                    state.phase = 'completed'
+                # A replay ends normally while retaining the original collection snapshot.
+                state.status = 'completed'
+                state.phase = 'completed'
             else:
                 raise AppError(404, 'OPERATION_NOT_FOUND', '操作不存在')
             self.refresh_rules(state)
@@ -143,7 +153,7 @@ class Game:
         segment = film.segments[playback.next_segment]
         if command.segment_id != segment.id:
             raise AppError(409, 'SCREENING_OUT_OF_ORDER', '请按顺序完整播放字幕')
-        if self.clock() < playback.segment_started_at + segment.duration_ms / 1000:
+        if command.advance_mode != 'manual' and self.clock() < playback.segment_started_at + segment.duration_ms / 1000:
             raise AppError(409, 'SCREENING_TOO_EARLY', '当前字幕尚未达到最短展示时间')
         playback.next_segment += 1
         playback.segment_started_at = self.clock()

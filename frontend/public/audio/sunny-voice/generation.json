@@ -1,0 +1,7 @@
+{
+  "voice": "zh-CN-XiaoxiaoNeural",
+  "provider": "Microsoft Edge online TTS via edge-tts 7.2.8",
+  "rate": "-5%",
+  "pitch": "+2Hz",
+  "lines": 69
+}

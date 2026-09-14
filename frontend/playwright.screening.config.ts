@@ -5,7 +5,10 @@ export default defineConfig({
   timeout: 450000,
   expect: { timeout: 15000 },
   workers: 2,
-  use: { baseURL: "http://127.0.0.1:5180", trace: "retain-on-failure" },
+  use: {
+    baseURL: process.env.SCREENING_BASE_URL || "http://127.0.0.1:5180",
+    trace: "retain-on-failure",
+  },
   projects: [
     {
       name: "screening-desktop",

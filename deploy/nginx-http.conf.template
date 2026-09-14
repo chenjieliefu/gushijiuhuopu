@@ -1,0 +1,9 @@
+# 仅用于签发证书前的项目域名验证，不能覆盖其他站点。
+server {
+    listen 80;
+    server_name gushi.zexuan-604.com;
+    location ^~ /.well-known/acme-challenge/ {
+        root /opt/story-shop/acme;
+    }
+    location / { return 503; }
+}

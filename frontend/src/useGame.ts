@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { gateway, storagePrefix } from "./services";
 import {
   applySnapshot,
@@ -23,6 +23,11 @@ const toError = (error: unknown) =>
     : new GameError("UNEXPECTED", "这一步暂时没有完成，请重试。");
 export function useGame() {
   const token = useRef(readLocal("token"));
+  const getVoice = useCallback((text: string, signal: AbortSignal) => {
+    if (!gateway.voice || !token.current)
+      return Promise.reject(new Error("Voice unavailable"));
+    return gateway.voice(token.current, text, signal);
+  }, []);
   const current = useRef<GameState | null>(null);
   const lock = useRef(false);
   const [health, setHealth] = useState<Health | null>(null);
@@ -148,7 +153,7 @@ export function useGame() {
       if (retry && incoming.phase === "screening") setNeedsResume(true);
       else if (["screening_start", "screening_resume"].includes(action.type))
         setNeedsResume(false);
-      if (action.type === "reset") {
+      if (action.type === "reset" || action.type === "replay") {
         setNeedsResume(false);
         setMeta(await gateway.story());
         setDraft("");
@@ -205,7 +210,19 @@ export function useGame() {
     }
     return run({ type: "reset", confirm: true });
   }
+  async function enterStory() {
+    if (lock.current) return false;
+    if (!current.current && !(await start())) return false;
+    // Use the restored snapshot immediately; React state may still be rendering.
+    if (current.current?.phase === "completed") {
+      if (readLocal("pending")) return false;
+      return run({ type: "replay", confirm: true });
+    }
+    return true;
+  }
   return {
+    enterStory,
+    getVoice,
     state,
     meta,
     health,

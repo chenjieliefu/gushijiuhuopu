@@ -108,6 +108,16 @@ export class MockGateway implements Gateway {
       );
     let next = structuredClone(store.state);
     const action = request.action;
+    if (action.type === "replay") {
+      if (next.status !== "completed" || !next.collection)
+        throw new GameError(
+          "REPLAY_UNAVAILABLE",
+          "请先完成本次故事，再重新体验。",
+        );
+      const collection = next.collection;
+      next = initialState(next.session_id, next.version);
+      next.collection = collection;
+    }
     if (
       next.status === "completed" &&
       (action.type === "chat" || action.type === "inspect")
@@ -163,7 +173,7 @@ export class MockGateway implements Gateway {
       next.suggested_questions = suggestions(next);
     }
     if (action.type === "collect") {
-      if (!next.can_collect && !next.collection)
+      if (!next.can_collect && next.status !== "completed")
         throw new GameError(
           "COLLECTION_LOCKED",
           "先听完相机背后的故事，再决定是否接收寄展。",
