@@ -1,8 +1,9 @@
-.venv
-.git
-.env
-data
-__pycache__
-.pytest_cache
-tests
-docs
+**
+!Dockerfile
+!requirements.txt
+!app/
+!app/**
+!stories/
+!stories/**
+**/__pycache__/
+**/*.pyc

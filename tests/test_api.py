@@ -129,7 +129,16 @@ def test_concurrent_same_and_different_requests(tmp_path):
             await asyncio.to_thread(self.barrier.wait, timeout=5)
             return AIOutput(reply="并发测试回复")
 
-    with TestClient(create_app(tmp_path / "test.sqlite3", ai=SynchronizedAI())) as c:
+    class CountingAI:
+        calls = 0
+        async def generate(self, **kwargs):
+            self.calls += 1
+            await asyncio.sleep(0.05)
+            return AIOutput(reply="并发测试回复")
+
+    ai = CountingAI()
+    app = create_app(tmp_path / "test.sqlite3", ai=ai)
+    with TestClient(app) as c:
         h, state = start(c)
         command = body(state, message="同一个问题")
         def post(payload):
@@ -138,6 +147,8 @@ def test_concurrent_same_and_different_requests(tmp_path):
             same = list(pool.map(post, [command, command]))
         assert [r.status_code for r in same] == [200, 200]
         assert same[0].json() == same[1].json()
+        assert ai.calls == 1
+        app.state.game.ai = SynchronizedAI()
         state = same[0].json()
         assert len(state["messages"]) == 3
         with ThreadPoolExecutor(2) as pool:

@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from app.errors import AppError
 from app.models import Message, State, Story
+from app.rules import refresh_rules
 
 
 def token_hash(token: str) -> str:
@@ -15,11 +16,14 @@ def token_hash(token: str) -> str:
 
 
 def fresh_state(session_id: str, story: Story, version: int = 0) -> State:
-    return State(
+    state = State(
         session_id=session_id, story_id=story.id, story_version=story.version,
         is_test_fixture=story.is_test_fixture, version=version,
         messages=[Message(role="assistant", text=story.opening)],
+        phase="before_screening" if story.flow == "screening" else "exploration",
     )
+    refresh_rules(state, story)
+    return state
 
 
 class Store:
