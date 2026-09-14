@@ -18,7 +18,7 @@
 
 ## 2. 连接、认证与通用请求
 
-- 本地 Base URL：`http://127.0.0.1:8000`。团队联调及正式 Base URL：**待部署后填写**。
+- 本地 Base URL：`http://127.0.0.1:8000`。项目子域名已设为 `gushi.zexuan-604.com`，DNS 已配置；目标 Base URL 为 `https://gushi.zexuan-604.com`，**HTTPS 与游戏服务尚待部署验收**。资源与访问方式见 [部署交接](infrastructure-handoff.md)。
 - JSON 请求使用 `Content-Type: application/json`。受保护接口使用 `Authorization: Bearer <token>`，不用 Cookie；`session_id` 不能代替 token。
 - `POST /api/sessions` 返回唯一一次可取得的原始 token。前端保存以恢复同一匿名会话，不写入 URL、日志、截图或问题报告。没有账户登录、跨设备找回或 token 找回接口。
 - 除创建会话外，每个 POST 必填 `request_id`（UUID）和 `expected_version`（非负 JSON 整数，不接受字符串或布尔值）。新操作生成新 UUID，重试保持原路径及全部原字段。

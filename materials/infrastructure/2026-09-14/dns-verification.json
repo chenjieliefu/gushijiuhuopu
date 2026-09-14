@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-09-14T23:49:48.195476+08:00",
+  "checks": [
+    {
+      "resolver": "Google Public DNS",
+      "url": "https://dns.google/resolve?name=gushi.zexuan-604.com&type=A",
+      "response": {
+        "Status": 0,
+        "TC": false,
+        "RD": true,
+        "RA": true,
+        "AD": false,
+        "CD": false,
+        "Question": [
+          {
+            "name": "gushi.zexuan-604.com.",
+            "type": 1
+          }
+        ],
+        "Answer": [
+          {
+            "name": "gushi.zexuan-604.com.",
+            "type": 1,
+            "TTL": 572,
+            "data": "39.106.127.55"
+          }
+        ]
+      }
+    },
+    {
+      "resolver": "Cloudflare DNS",
+      "url": "https://cloudflare-dns.com/dns-query?name=gushi.zexuan-604.com&type=A",
+      "response": {
+        "Status": 0,
+        "TC": false,
+        "RD": true,
+        "RA": true,
+        "AD": false,
+        "CD": false,
+        "Question": [
+          {
+            "name": "gushi.zexuan-604.com",
+            "type": 1
+          }
+        ],
+        "Answer": [
+          {
+            "name": "gushi.zexuan-604.com",
+            "type": 1,
+            "TTL": 600,
+            "data": "39.106.127.55"
+          }
+        ]
+      }
+    }
+  ],
+  "local_udp_note": "Initial local dig via dns7.hichina.com returned NXDOMAIN; subsequent independent HTTPS DNS resolvers both returned the new A record."
+}

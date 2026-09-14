@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-09-14T23:45:31.612440+08:00",
+  "method": "Authenticated browser DOM read-only excerpts before and after the user-authorized new gushi DNS record",
+  "pages": [
+    {
+      "name": "firewall",
+      "url": "https://swasnext.console.aliyun.com/servers/cn-beijing/59015bdf65b544089df970d7cb81ca05/firewall",
+      "text": "轻量应用服务器/\n服务器/\nAlibabaCloudLinux-aojh\n常用文档\nOpenClaw 最佳实践\nAlibabaCloudLinux-aojh\nIPv4\n39.106.127.55(公)\n远程连接重启关机\n更多操作\n服务器概览\n域名\n防火墙\n安全防护\n命令助手\n快照\n磁盘\n监控\n自助诊断\n操作记录\n创建或修改防火墙规则时，限制IP来源可填写单个 IP，CIDR 段或者0.0.0.0/0(代表所有IPv4 地址)，不填写默认为0.0.0.0/0，对所有IPv4地址都开放\n如果想临时关闭某个端口，请使用禁用功能，免于开放对应端口时再新建规则\n单台服务器最多可创建50条防火墙规则\n根据《中华人民共和国电信条例》及《电信业务经营许可管理办法》，开展递归解析服务需要具备相应的增值电信业务经营许可证\n查看详情\n添加规则\n应用防火墙模板\n标签筛选\n按启用状态排序\n\t协议\t端口范围\t来源IP\t状态\t标签\t备注\t操作\n\n \n\t\n \n\t\n \n\t\n \n\t\n \n\t\n \n\t\n \n\t\n \n\n\n\tTCP\t80\t0.0.0.0/0\t\n已启用\n\t\t\t禁用修改删除\n\n\tTCP\t443\t0.0.0.0/0\t\n已启用\n\t\t\t禁用修改删除\n\n\tTCP\t22\t0.0.0.0/0\t\n已启用\n\t\t\t禁用修改删除\n\n\tICMP\t-1（全部）\t0.0.0.0/0\t\n已启用\n\t\t\t禁用修改删除\n\n删除\n共 4 条\n1\n10 条/页\n远程连接重启关机重置密码续费升级重置系统制作自定义镜像退订\n删除\n删除\n禁用修改删除\n禁用修改删除\n禁用修改删除\n禁用修改删除"
+    },
+    {
+      "name": "domain",
+      "url": "https://dc.console.aliyun.com/next/index#/domain-list/all",
+      "text": "域名与网站域名列表\n域名列表\n帮助文档\n分组管理\n\n【重要】域名注册必须使用已完成实名认证的信息模板；未实名认证域名不能续费、将被暂停解析，请立即实名认证！查看公告\n\n近期有不法企业利用ICP备案信息等公示信息向网站主办单位邮寄域名注册证书等纸质文件收取费用获利，阿里云不会以快递到付的方式向您邮寄域名注册证书等，请您谨慎签收！\n\n因域名过户、交易等导致域名持有者发生变更的，请及时变更或注销备案；处于急需续费或急需赎回状态的域名，如您确认不再续费或赎回域名，请及时注销备案。了解详情\n\n【重要】域名注册必须使用已完成实名认证的信息模板；未实名认证域名不能续费、将被暂停解析，请立即实名认证！查看公告\n\n近期有不法企业利用ICP备案信息等公示信息向网站主办单位邮寄域名注册证书等纸质文件收取费用获利，阿里云不会以快递到付的方式向您邮寄域名注册证书等，请您谨慎签收！\n\n因域名过户、交易等导致域名持有者发生变更的，请及时变更或注销备案；处于急需续费或急需赎回状态的域名，如您确认不再续费或赎回域名，请及时注销备案。了解详情\n\n【重要】域名注册必须使用已完成实名认证的信息模板；未实名认证域名不能续费、将被暂停解析，请立即实名认证！查看公告\n\n近期有不法企业利用ICP备案信息等公示信息向网站主办单位邮寄域名注册证书等纸质文件收取费用获利，阿里云不会以快递到付的方式向您邮寄域名注册证书等，请您谨慎签收！\n\n因域名过户、交易等导致域名持有者发生变更的，请及时变更或注销备案；处于急需续费或急需赎回状态的域名，如您确认不再续费或赎回域名，请及时注销备案。了解详情\n\n高级搜索\n注册域名\n域名名称\n\t\n全部域名状态\n全部域名分组\n注册时间\n-\n到期时间\n-\n自动续费\n\t\n域名\n\t\n状态\n\t\n域名持有者\n\t\n注册时间\n\t\n到期时间\n\t\n自动续费\n\t\n分组\n\t\nDNS\n\t\n标签\n\t\n操作\n\t\nzexuan-604.com\n\n-\n\n\t\n正常\n\t\n**轩\n\t\n2026-05-13 11:09:41\n\t\n2027-05-13 11:09:41\n\t\n\t\n--\n\t\ndns7.hichina.com | dns8.hichina.com\n\t\n\t\nAI建站\n续费\n解析\n管理\n上一页1下一页\n每页显示：\n10\n已选0个\n续费\n转至其他账号\n更多"
+    },
+    {
+      "name": "dns_before",
+      "url": "https://dnsnext.console.aliyun.com/authoritative/domains/zexuan-604.com",
+      "text": "云解析 DNS/权威域名解析/解析设置\n域名注册控制台\nSSL证书控制台\n异步任务\n帮助文档\nzexuan-604.com\n免费版\n【0元试用】新客免费获取DNS试用福利\n【DNS容灾切换】服务故障自动切换DNS解析地址，请使用全局流量管理GTM！\n【0元试用】新客免费获取DNS试用福利\n【DNS容灾切换】服务故障自动切换DNS解析地址，请使用全局流量管理GTM！\n解析设置\n流量分析\n解析日志\n操作日志\n自定义线路\nDNS安全\n更多服务\n域名的DNS信息配置正确。\n查看DNS服务器\n添加记录\n导入/导出\n主机记录\n\t\n精确搜索\n请选择分组\n\t\n主机记录\n\t\n记录类型\n\t\n解析请求来源\n\t\n记录值\n\t\n负载策略\n\t\n权重\n\t\nTTL\n\t\n启用状态\n\t\n备注\n\t\n创建时间（UTC+8）\n\t\n最新更新时间（UTC+8）\n\t\n操作\n\t\nread\n\t\nA\n\t\n默认\n\t\n39.106.127.55\n\t\n轮询\n\t\n-\n\t\n10分钟\n\t\n启用\n\t\n-\n\t\n2026年8月23日 03:26:33\n\t\n2026年8月23日 03:26:33\n\t\n修改\n健康检查\n域名监控\n\n\n\t\nqingdeng\n\t\nA\n\t\n默认\n\t\n39.106.127.55\n\t\n轮询\n\t\n-\n\t\n10分钟\n\t\n启用\n\t\n-\n\t\n2026年5月13日 14:28:34\n\t\n2026年5月13日 14:28:34\n\t\n修改\n健康检查\n域名监控\n\n\n操作\n修改\n健康检查\n域名监控\n\n\n修改\n健康检查\n域名监控\n批量启用批量暂停更换分组修改TTL修改权重修改记录值批量删除\n每页显示\n10\n共 2 条上一页1下一页\n超值低价\n活动规则\n云解析DNS低价优惠19.9元/年\n原价48元/年，低价套餐节省接近60%\n云解析最高性价比版本，限购1个，超值优惠\n支持DNSSEC，防止DNS污染欺骗、篡改解析结果\n全球超过100+节点，访问域名更快、更稳定\n100%的解析服务可用性保障，提供付费用户专属答疑群支持\n立即领取\n不再提示\n添加记录\nclose\n记录类型\nA -- 将域名指向一个IPv4地址\n主机记录\n.zexuan-604.com\n解析请求来源\n默认 / 默认\nTTL时间记录值负载策略(默认值)\nTTL时间\n分钟\n记录值负载策略\n轮询\n记录值集合\n记录值\n\t\n状态\n\t\n备注\n\t\n操作\n\n\n\t\n\t\n0/50\n\t\n删除\n添加条目\n确定添加并继续取消"
+    },
+    {
+      "name": "instance",
+      "url": "https://swasnext.console.aliyun.com/servers/cn-beijing/59015bdf65b544089df970d7cb81ca05/dashboard",
+      "text": "轻量应用服务器/\n服务器/\nAlibabaCloudLinux-aojh\n常用文档\nOpenClaw 最佳实践\nAlibabaCloudLinux-aojh\nIPv4\n39.106.127.55(公)\n远程连接重启关机\n更多操作\n服务器概览\n域名\n防火墙\n安全防护\n命令助手\n快照\n磁盘\n监控\n自助诊断\n操作记录\n服务器监控\n峰值公网带宽\n0\nMbps\n/\n200\nMbps\n详情\nCPU\n3.16\n%\n/\n2\n核\n详情\n内存\n0.31\nGiB\n/\n2\nGiB\n详情\n系统盘\n4.75\nGiB\n/\n40\nGiB\n详情\n基本信息\n实例ID\n\t\n实例名称\n\n\n59015bdf65b544089df970d7cb81ca05\n\t\nAlibabaCloudLinux-aojh\n\n\n运行状态\n\t\n规格族\n\n\n运行中\n\t\n通用型\n\n\n地域\n\t\n镜像\n\n\n华北2（北京）\n\t\nAlibaba Cloud Linux\n3.21.04\n重置系统\n制作自定义镜像\n\n\nDDoS攻击状态\n\t\n到期时间\n\n\n正常\n更多信息\n\t\n2027年5月13日 23:59:59\n续费\n\n\nIP地址\n\t\n创建时间\n\n\n39.106.127.55(公)\n172.25.33.114(私有)\n\t\n2026年5月13日 11:39:07\n\n\n密钥\n\t\n标签\n\n\n暂未绑定\n绑定\n\t\n未绑定标签\n安全防护\n\n\n在线\n免费版\n前往安全防护页面\n命令助手\n\n\n已安装\n执行命令\n云监控插件\n\n\n运行中\n远程连接重启关机重置密码续费升级重置系统制作自定义镜像退订"
+    },
+    {
+      "name": "dns_after",
+      "checked_at": "2026-09-14T23:48:57.577204+08:00",
+      "url": "https://dnsnext.console.aliyun.com/authoritative/domains/zexuan-604.com",
+      "rows": [
+        "\t\ngushi\n\t\nA\n\t\n默认\n\t\n39.106.127.55\n\t\n轮询\n\t\n-\n\t\n10分钟\n\t\n启用\n\t\n故事旧货铺项目专用\n\t\n2026年9月14日 23:47:59\n\t\n2026年9月14日 23:47:59\n\t\n修改\n健康检查\n域名监控",
+        "\t\nread\n\t\nA\n\t\n默认\n\t\n39.106.127.55\n\t\n轮询\n\t\n-\n\t\n10分钟\n\t\n启用\n\t\n-\n\t\n2026年8月23日 03:26:33\n\t\n2026年8月23日 03:26:33\n\t\n修改\n健康检查\n域名监控",
+        "\t\nqingdeng\n\t\nA\n\t\n默认\n\t\n39.106.127.55\n\t\n轮询\n\t\n-\n\t\n10分钟\n\t\n启用\n\t\n-\n\t\n2026年5月13日 14:28:34\n\t\n2026年5月13日 14:28:34\n\t\n修改\n健康检查\n域名监控"
+      ]
+    }
+  ]
+}
