@@ -5,7 +5,10 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       DATABASE_PATH: /app/data/story-shop.sqlite3
-      AI_MODE: mock
+      STORY_PATH: ${STORY_PATH:-/app/stories/demo.json}
+      AI_MODE: ${AI_MODE:-mock}
+      AI_PROVIDER_FACTORY: ${AI_PROVIDER_FACTORY:-}
+      AI_MAX_PARALLEL: ${AI_MAX_PARALLEL:-4}
       AI_TIMEOUT_SECONDS: 10
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
     volumes:
