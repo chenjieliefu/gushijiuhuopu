@@ -96,3 +96,28 @@ uv run pytest -q
 - 服务保存回复表示已生成并可恢复，无法证明玩家已经看到网络响应；如正式验收要求严格的展示确认，需要前后端另行约定确认事件。
 
 实现中的测试生命周期和 TestClient 用法参考 [FastAPI 测试文档](https://fastapi.tiangolo.com/tutorial/testing/) 与 [lifespan 文档](https://fastapi.tiangolo.com/advanced/events/)。
+
+## 前端交互样例（王泽轩）
+
+前端在 `frontend/`，可以独立体验第一章的页面与交互。当前使用明确标识的本地样例回应和 SVG 占位素材；已通过本地后端测试章节的实际 HTTP 联调；真实 AI、共享环境、正式剧情配置与美术验收待后续对接。
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+打开 http://127.0.0.1:5178 。同一浏览器可继续上次进度；页面底部提供确认重置和一次性故障模拟。
+
+```bash
+npm run build
+npm test
+npx playwright install chromium --only-shell
+npm run test:e2e
+```
+
+- [前端交付、布局与接口缺口](docs/frontend-handoff.md)
+- [给美术的素材需求与替换约定](docs/art-assets.md)
+- [验证范围与结果](docs/frontend-validation.md)
+
+后续联调可参考 `frontend/.env.example` 切换 HTTP 适配器。HTTP 适配器已通过本地 FastAPI 测试章节的桌面/手机实际联调，详见 [本地联调与验证](docs/local-integration.md)。这不代表正式 AI 或公网环境已经就绪。
