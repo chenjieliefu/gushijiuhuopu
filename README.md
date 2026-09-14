@@ -1,5 +1,7 @@
 # 故事旧货铺
 
+前端、AI 与后端接入统一对照 [正式章节联调契约 v1](docs/integration-contract.md)，字段结构见 [OpenAPI 快照](docs/contracts/openapi.json)。
+
 运行限额、AI 日调用预算、过期清理、备份恢复和部署预检见 [后端运行保障](docs/backend-operations.md)。
 
 ![故事旧货铺](./story-poster.png)
