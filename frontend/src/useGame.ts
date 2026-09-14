@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { gateway, storagePrefix } from "./services";
 import {
   applySnapshot,
@@ -7,6 +7,7 @@ import {
   type GameState,
   type Request,
   type StoryMeta,
+  type Health,
 } from "./services/contract";
 
 const readLocal = (key: string) => {
@@ -22,8 +23,15 @@ const toError = (error: unknown) =>
     : new GameError("UNEXPECTED", "这一步暂时没有完成，请重试。");
 export function useGame() {
   const token = useRef(readLocal("token"));
+  const getVoice = useCallback((text: string, signal: AbortSignal) => {
+    if (!gateway.voice || !token.current)
+      return Promise.reject(new Error("Voice unavailable"));
+    return gateway.voice(token.current, text, signal);
+  }, []);
   const current = useRef<GameState | null>(null);
   const lock = useRef(false);
+  const [health, setHealth] = useState<Health | null>(null);
+  const [needsResume, setNeedsResume] = useState(false);
   const [state, setState] = useState<GameState | null>(null);
   const [meta, setMeta] = useState<StoryMeta | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,7 +68,11 @@ export function useGame() {
     setBusy(true);
     setError(null);
     try {
-      const nextMeta = await gateway.story();
+      const [nextMeta, nextHealth] = await Promise.all([
+        gateway.story(),
+        gateway.health?.(),
+      ]);
+      setHealth(nextHealth || null);
       let incoming: GameState;
       if (!fresh && token.current)
         incoming = await gateway.restore(token.current);
@@ -78,6 +90,7 @@ export function useGame() {
         setFailed(null);
         setDraft("");
       }
+      setNeedsResume(incoming.phase === "screening");
       setMeta(nextMeta);
       current.current = null;
       apply(incoming);
@@ -85,6 +98,8 @@ export function useGame() {
       if (pending && !fresh) {
         try {
           const request = JSON.parse(pending) as Request;
+          if (request.session_id && request.session_id !== incoming.session_id)
+            throw new Error("stale pending session");
           setFailed(request);
           setError(
             new GameError(
@@ -118,24 +133,34 @@ export function useGame() {
     setError(null);
     setLastAction(action.type);
     const request = retry ?? {
+      session_id: current.current.session_id,
       request_id: crypto.randomUUID(),
       expected_version: current.current.version,
       action,
     };
-    save("pending", JSON.stringify(request));
     try {
+      if (!save("pending", JSON.stringify(request)))
+        throw new GameError(
+          "STORAGE_UNAVAILABLE",
+          "未能保存待确认操作，请恢复浏览器存储后重试。",
+        );
       let incoming = await gateway.execute(token.current, request);
       if (incoming.version < current.current.version)
         incoming = await gateway.restore(token.current);
       apply(incoming);
-      setFailed(null);
-      save("pending", null);
       if (action.type === "chat" && draftRef.current.trim() === action.message)
         setDraft("");
-      if (action.type === "reset") {
+      if (retry && incoming.phase === "screening") setNeedsResume(true);
+      else if (["screening_start", "screening_resume"].includes(action.type))
+        setNeedsResume(false);
+      if (action.type === "reset" || action.type === "replay") {
+        setNeedsResume(false);
+        setMeta(await gateway.story());
         setDraft("");
         save("page-position", null);
       }
+      setFailed(null);
+      save("pending", null);
       return true;
     } catch (err) {
       setFailed(request);
@@ -152,7 +177,15 @@ export function useGame() {
     lock.current = true;
     setBusy(true);
     try {
-      apply(await gateway.restore(token.current));
+      const [incoming, nextMeta, nextHealth] = await Promise.all([
+        gateway.restore(token.current),
+        gateway.story(),
+        gateway.health?.(),
+      ]);
+      setMeta(nextMeta);
+      setHealth(nextHealth || null);
+      apply(incoming);
+      setNeedsResume(incoming.phase === "screening");
       setFailed(null);
       save("pending", null);
       setError(null);
@@ -177,9 +210,24 @@ export function useGame() {
     }
     return run({ type: "reset", confirm: true });
   }
+  async function enterStory() {
+    if (lock.current) return false;
+    if (!current.current && !(await start())) return false;
+    // Use the restored snapshot immediately; React state may still be rendering.
+    if (current.current?.phase === "completed") {
+      if (readLocal("pending")) return false;
+      return run({ type: "replay", confirm: true });
+    }
+    return true;
+  }
   return {
+    enterStory,
+    getVoice,
     state,
     meta,
+    health,
+    needsResume,
+    requireResume: () => setNeedsResume(true),
     busy,
     error,
     failed,
@@ -193,6 +241,16 @@ export function useGame() {
     reset,
     sync,
     retry: () => failed && run(failed.action, failed),
+    getScreening: () => {
+      if (!gateway.screening)
+        throw new Error("Screening requires HTTP gateway");
+      return gateway.screening(token.current!);
+    },
+    getCollection: () => {
+      if (!gateway.collection)
+        throw new Error("Collection requires HTTP gateway");
+      return gateway.collection(token.current!);
+    },
     getPage: (id: string) => gateway.page(token.current!, id),
     reportError: (err: unknown) => setError(toError(err)),
     clearError: () => setError(null),

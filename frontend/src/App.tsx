@@ -29,6 +29,11 @@ import { gateway, storagePrefix } from "./services";
 import { MockGateway } from "./services/mock";
 import { source } from "./data/chapter";
 import type { StoryPage } from "./services/contract";
+import { StoryHome } from "./components/StoryHome";
+import { FormalExperience } from "./components/FormalExperience";
+import { screeningArt } from "./data/screening-art";
+import { stopVoice, useSoundLifecycle } from "./audio/atmosphere";
+import { SoundControls } from "./components/SoundControls";
 import { useGame } from "./useGame";
 
 type Panel =
@@ -43,9 +48,22 @@ type Panel =
   | "arrival"
   | null;
 export default function App() {
+  useSoundLifecycle();
   const game = useGame();
+  const [screen, setScreen] = useState<"home" | "stories" | "play">("home");
+  const goHome = () => {
+    stopVoice();
+    setPanel(null);
+    setScreen("home");
+  };
   const { state, meta, busy, error, failed, draft, setDraft } = game;
   const [panel, setPanel] = useState<Panel>(null);
+  useEffect(() => {
+    document.title =
+      screen === "play" && meta?.title
+        ? `故事旧货铺 · ${meta.title}`
+        : "故事旧货铺";
+  }, [screen, meta?.title]);
   const [target, setTarget] = useState("camera_front");
   const [photo, setPhoto] = useState(0);
   const [page, setPage] = useState<StoryPage | null>(null);
@@ -180,8 +198,35 @@ export default function App() {
         )}
     </>
   );
+  if (screen !== "play" && gateway.mode === "http")
+    return (
+      <StoryHome
+        game={game}
+        view={screen}
+        onSelect={() => setScreen("stories")}
+        onHome={goHome}
+        onEnter={() => setScreen("play")}
+      />
+    );
+  if (
+    state &&
+    (meta?.flow === "screening" ||
+      (state.phase &&
+        state.phase !== "exploration" &&
+        state.story_id === "lost-sunshine"))
+  )
+    return (
+      <FormalExperience
+        game={game}
+        onHome={goHome}
+        onChooseStory={() => {
+          stopVoice();
+          setScreen("stories");
+        }}
+      />
+    );
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${!state ? "immersive-welcome" : ""}`}>
       <header className="topbar">
         <a
           className="brand"
@@ -197,6 +242,7 @@ export default function App() {
           </span>
         </a>
         <nav aria-label="店铺导航">
+          <SoundControls />
           <span className="mode-label">
             <span className="tiny-dot" />
             {gateway.mode === "mock"
@@ -259,13 +305,14 @@ export default function App() {
             </p>
           </div>
           <div className="welcome-scene">
-            <ShopScene
-              collected={false}
-              expression="neutral"
-              busy={busy}
-              onInspect={() => void game.start()}
-              onCollection={() => setPanel("collection")}
-            />
+            <div className="formal-welcome-art">
+              <img src={screeningArt.shop} alt="阳光照进故事旧货铺" />
+              <img
+                className="welcome-visitor"
+                src={screeningArt.visitor}
+                alt="带着故事而来的看山"
+              />
+            </div>
             <div className="paper-tag">
               <span>今日来访</span>
               <strong>遗失的晴天</strong>

@@ -163,6 +163,42 @@ def test_no_early_disclosure_no_skipping_and_no_input_during_film(tmp_path):
         assert client.get('/api/session', headers=headers).json() == state
 
 
+def test_replay_keeps_collection_resets_story_and_can_finish_again(tmp_path):
+    clock = Clock()
+    def application():
+        return create_app(tmp_path / 'replay.sqlite3', ai=ScriptedAI(), story_path=STORY_PATH,
+                          clock=clock, limits=Limits(requests_per_minute=10000))
+    with TestClient(application()) as client:
+        headers, state = session(client)
+        invalid = client.post('/api/replay', headers=headers, json=command(state, confirm=True))
+        assert invalid.json()['error']['code'] == 'REPLAY_UNAVAILABLE'
+        state = write(client, headers, state, '/api/screening/start', confirm=True)
+        state = finish(client, headers, state, clock)
+        state = write(client, headers, state, '/api/collection', confirm=True)
+        saved = state['collection']
+        replay_command = command(state, confirm=True)
+        state = client.post('/api/replay', headers=headers, json=replay_command).json()
+        assert state['phase'] == 'before_screening' and state['status'] == 'active'
+        assert state['collection'] == saved
+        assert state['playback'] is None and not state['clues'] and not state['disclosed_facts']
+        assert len(state['messages']) == 1 and not state['can_collect']
+        assert client.post('/api/replay', headers=headers, json=replay_command).json() == state
+        assert client.get('/api/collection', headers=headers).json() == saved
+        early = client.post('/api/collection', headers=headers, json=command(state, confirm=True))
+        assert early.json()['error']['code'] == 'COLLECTION_LOCKED'
+    # The replay and the original album entry survive a server restart.
+    with TestClient(application()) as client:
+        assert client.get('/api/session', headers=headers).json() == state
+        state = write(client, headers, state, '/api/screening/start', confirm=True)
+        assert client.get('/api/screening', headers=headers).json()['segment']['id'] == 'FILM001'
+        state = finish(client, headers, state, clock)
+        assert state['can_collect']
+        state = write(client, headers, state, '/api/collection', confirm=True)
+        assert state['phase'] == 'completed' and state['status'] == 'completed'
+        assert state['collection'] == saved
+        assert client.get('/api/collection', headers=headers).json() == saved
+
+
 def test_late_ai_cannot_overwrite_started_film(tmp_path):
     entered, release = Event(), Event()
     class SlowAI:
@@ -201,3 +237,38 @@ def test_screening_requires_valid_config():
     raw['screening']['segments'][1]['id'] = 'FILM001'
     with pytest.raises(ValueError, match='字幕 ID'):
         Story.model_validate(raw).validate_references()
+
+
+def test_manual_reading_advances_on_click_without_duration_gate_but_keeps_order(tmp_path):
+    clock = Clock()
+    app = create_app(tmp_path / 'manual.sqlite3', ai=ScriptedAI(), story_path=STORY_PATH,
+                     clock=clock, limits=Limits(requests_per_minute=10000))
+    with TestClient(app) as client:
+        headers, state = session(client)
+        state = write(client, headers, state, '/api/screening/start', confirm=True)
+        run_id = state['playback']['run_id']
+        wrong = client.post('/api/screening/progress', headers=headers, json=command(
+            state, run_id=run_id, segment_id='FILM002', advance_mode='manual'))
+        assert wrong.json()['error']['code'] == 'SCREENING_OUT_OF_ORDER'
+        first = command(state, run_id=run_id, segment_id='FILM001', advance_mode='manual')
+        response = client.post('/api/screening/progress', headers=headers, json=first)
+        assert response.status_code == 200
+        state = response.json()
+        assert state['playback']['next_segment'] == 1
+        assert client.post('/api/screening/progress', headers=headers, json=first).json() == state
+        invalid = client.post('/api/screening/progress', headers=headers, json=command(
+            state, run_id=run_id, segment_id='FILM002', advance_mode='skip_all'))
+        assert invalid.status_code == 422
+        for index in range(2, 52):
+            state = write(client, headers, state, '/api/screening/progress', run_id=run_id,
+                          segment_id=f'FILM{index:03}', advance_mode='manual')
+        assert clock.value == 1000.0
+        assert state['phase'] == 'after_screening'
+        assert state['playback']['completed'] and state['can_collect']
+
+
+def test_legacy_progress_fingerprint_remains_compatible():
+    from app.models import ScreeningProgressCommand
+    value = dict(request_id=uuid4(), expected_version=0, run_id=uuid4(), segment_id='FILM001')
+    parsed = ScreeningProgressCommand(**value)
+    assert 'advance_mode' not in parsed.model_dump(mode='json', exclude_none=True)

@@ -10,7 +10,7 @@ from typing import Annotated
 
 from fastapi import Depends
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.exceptions import HTTPException
 
@@ -22,6 +22,7 @@ from app.models import (ChatCommand, CollectCommand, Collection, Command, Confir
                         ResetCommand, ScreeningProgressCommand, ScreeningResumeCommand, ScreeningView, SessionCreated, State, Story)
 from app.service import Game
 from app.store import Store
+from app.voice import VoiceRequest, dialogue_audio
 
 ROOT = Path(__file__).resolve().parent.parent
 security = HTTPBearer(auto_error=False)
@@ -45,7 +46,11 @@ def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
     provider = ai if ai is not None else load_provider(os.getenv("AI_MODE", "mock"))
     if isinstance(provider, MockAI) and not story.is_test_fixture:
         raise ValueError("模拟 AI 只能使用明确标注 is_test_fixture=true 的测试配置；正式章节联调请用 scripted")
-    store = Store(database_path or Path(os.getenv("DATABASE_PATH", str(ROOT / "data/story-shop.sqlite3"))), limits=limits, clock=clock)
+    if os.getenv('STORE_BACKEND', 'sqlite') == 'tos' and database_path is None:
+        from app.tos_store import TosStore
+        store = TosStore.from_env(limits=limits, clock=clock)
+    else:
+        store = Store(database_path or Path(os.getenv("DATABASE_PATH", str(ROOT / "data/story-shop.sqlite3"))), limits=limits, clock=clock)
     timeout = ai_timeout if ai_timeout is not None else float(os.getenv("AI_TIMEOUT_SECONDS", "10"))
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("AI_TIMEOUT_SECONDS 必须为有限正数")
@@ -149,6 +154,12 @@ def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
     async def chat(command: ChatCommand, token: Token):
         return await game.execute(token, "chat", command)
 
+    @app.post('/api/voice', tags=['游戏操作'])
+    async def voice(command: VoiceRequest, token: Token):
+        state = await asyncio.to_thread(store.get, token)
+        game.check_story(state)
+        return Response(await dialogue_audio(state, command.text), media_type='audio/mpeg')
+
     @app.get("/api/pages/{page_id}", response_model=Page, tags=["故事"])
     def page(page_id: str, token: Token):
         state = store.get(token)
@@ -169,6 +180,10 @@ def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
     @app.post("/api/reset", response_model=State, tags=["会话"])
     async def reset(command: ResetCommand, token: Token):
         return await game.execute(token, "reset", command)
+
+    @app.post('/api/replay', response_model=State, tags=['会话'])
+    async def replay(command: ConfirmCommand, token: Token):
+        return await game.execute(token, 'replay', command)
 
     @app.post("/api/screening/start", response_model=State, tags=["放映"])
     async def start_screening(command: ConfirmCommand, token: Token):

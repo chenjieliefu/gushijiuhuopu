@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "voices": {
+    "narrator": {
+      "苏晚在旧物回收站捡到那台老式相机时，恰逢初秋。": "/audio/reference-voices-v1/narrator/23f7bc447d01ced9.mp3"
+    },
+    "kanshan": {
+      "老板，你好，我想在这里办理一件旧物的寄展。这台相机是苏晚的，她托我带来，还有这些照片。在你决定之前，我想先把它的故事讲给你听。": "/audio/reference-voices-v1/kanshan/8c948f1b22dcced6.mp3"
+    }
+  }
+}

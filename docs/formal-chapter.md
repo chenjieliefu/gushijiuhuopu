@@ -4,7 +4,7 @@
 
 本次以 `materials/遗失的晴天/遗失的晴天_Galgame逐句对话与画面脚本.md` v4 为流程依据。新增 `stories/lost-sunshine.json`，保留 demo 供旧前端联调使用。
 
-已提供后端阶段、逐单元进度、恢复、寄展确认、收藏快照和自定义 AI 模块入口。真实 AI、前端连续播放器、最终素材映射和共享部署尚未交付；不能把 API 测试通过当作完整游戏已上线。
+已提供后端阶段、逐单元进度、恢复、寄展确认、收藏快照和自定义 AI 模块入口。前端连续播放器与素材映射提案已交付并完成本地 HTTP 联调，见 [前端交接](frontend-screening-handoff.md)。真实 AI、最终素材审定和共享部署仍待完成；不能把本地测试通过当作游戏已上线。
 
 ## 内容与素材状态
 
@@ -25,7 +25,7 @@ STORY_PATH=stories/lost-sunshine.json AI_MODE=scripted \
 
 也可使用 `uvicorn app.main:create_app --factory`。`/health` 返回 `flow=screening`、`ai_mode=scripted`、`original_verified=false`。scripted 是固定问答联调器，未匹配问题会明确提示自由问答未接入，不能作为真实模型验收。
 
-现有前端尚没有此放映协议的播放器，应继续连默认 demo；播放器改造完成后再切正式配置。前端需显示当前 AI 模式与素材/原文待核对状态，避免把联调内容当作已完成的正式体验。
+新版前端已支持此放映协议，在 frontend 运行 `npm run dev:screening` 可连接正式配置。旧探索样例继续使用 demo。前端需显示当前 AI 模式与素材/原文待核对状态，避免把联调内容当作已完成的正式体验。
 
 ## 阶段与接口
 

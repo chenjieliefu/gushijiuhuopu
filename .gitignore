@@ -19,3 +19,5 @@ frontend/*.tsbuildinfo
 .env.*
 !.env.example
 .DS_Store
+.local-preview/
+.vefaas/

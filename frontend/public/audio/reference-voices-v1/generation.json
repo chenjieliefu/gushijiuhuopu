@@ -1,0 +1,12 @@
+{
+  "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+  "runtime": "mlx-audio 0.5.4",
+  "generated_locally": true,
+  "roles": {
+    "narrator": 51,
+    "kanshan": 18
+  },
+  "reference_clips": "Private local clips from the two user-supplied Tingwu recordings",
+  "validation": "All 69 clips transcribed and compared; homophones reviewed; Kanshan lines 2 and 3 regenerated",
+  "finished_at": "2026-09-15T03:24:01.031810"
+}

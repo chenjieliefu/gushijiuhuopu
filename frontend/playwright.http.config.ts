@@ -3,6 +3,7 @@ import { defineConfig } from "@playwright/test";
 // Requires a real local backend on 18000 and Vite in HTTP mode on 5179.
 // This suite does not mock fetch or substitute server responses.
 export default defineConfig({
+  outputDir: "./test-results/http",
   testDir: "./tests-http",
   use: { baseURL: "http://127.0.0.1:5179", trace: "retain-on-failure" },
   projects: [
