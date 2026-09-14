@@ -38,7 +38,7 @@ npm run dev:screening
 
 固定配音可直接播放。动态 AI 配音当前使用本机独立语音服务，生产环境需另行配置。密钥、数据库、原始参考录音与本地模型环境不在仓库内。
 
-当前分支为 `feat/frontend-screening`，通过 [PR #6](https://github.com/chenjieliefu/gushijiuhuopu/pull/6) 交付团队。火山引擎公网版本已发布并完成首章验收。
+最新完整版本已通过 [PR #6](https://github.com/chenjieliefu/gushijiuhuopu/pull/6) 合并到 `main`，团队直接拉取主分支即可。火山引擎公网版本已发布并完成首章验收。
 
 ### 火山引擎上线（2026-09-15）
 
