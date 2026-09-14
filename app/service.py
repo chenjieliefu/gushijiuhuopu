@@ -158,6 +158,8 @@ class Game:
     async def chat(self, state: State, command: Command):
         if sum(message.role == 'user' for message in state.messages) >= 100:
             raise AppError(409, 'TURN_LIMIT', '当前会话已达到问答上限，请确认重置后继续')
+        await asyncio.to_thread(self.store.check_command_capacity, state.session_id)
+        await asyncio.to_thread(self.store.reserve_ai_call)
         context = allowed_context(state, self.story)
         try:
             raw = await asyncio.wait_for(self.ai.generate(

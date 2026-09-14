@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import sqlite3
@@ -15,6 +16,7 @@ from starlette.exceptions import HTTPException
 
 from app.ai import AIProvider, MockAI, ScriptedAI, load_provider
 from app.middleware import Application
+from app.limits import Limits
 from app.errors import AppError
 from app.models import (ChatCommand, CollectCommand, Collection, Command, ConfirmCommand, ErrorEnvelope, InspectCommand, Page,
                         ResetCommand, ScreeningProgressCommand, ScreeningResumeCommand, ScreeningView, SessionCreated, State, Story)
@@ -36,13 +38,14 @@ Token = Annotated[str, Depends(bearer)]
 
 
 def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
-               ai_timeout: float | None = None, story_path: Path | None = None, clock=time.time):
+               ai_timeout: float | None = None, story_path: Path | None = None, clock=time.time, limits: Limits | None = None):
+    limits = limits or Limits.from_env()
     story = Story.model_validate_json((story_path or Path(os.getenv("STORY_PATH", str(ROOT / "stories/demo.json")))).read_text())
     story.validate_references()
     provider = ai if ai is not None else load_provider(os.getenv("AI_MODE", "mock"))
     if isinstance(provider, MockAI) and not story.is_test_fixture:
         raise ValueError("模拟 AI 只能使用明确标注 is_test_fixture=true 的测试配置；正式章节联调请用 scripted")
-    store = Store(database_path or Path(os.getenv("DATABASE_PATH", str(ROOT / "data/story-shop.sqlite3"))))
+    store = Store(database_path or Path(os.getenv("DATABASE_PATH", str(ROOT / "data/story-shop.sqlite3"))), limits=limits, clock=clock)
     timeout = ai_timeout if ai_timeout is not None else float(os.getenv("AI_TIMEOUT_SECONDS", "10"))
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("AI_TIMEOUT_SECONDS 必须为有限正数")
@@ -55,17 +58,28 @@ def create_app(database_path: Path | None = None, ai: AIProvider | None = None,
     async def lifespan(app):
         store.initialize()
         logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+        async def maintain():
+            while True:
+                try:
+                    await asyncio.to_thread(store.cleanup, dry_run=False)
+                except sqlite3.Error as exc:
+                    logger.error("cleanup_failed type=%s", type(exc).__name__)
+                await asyncio.sleep(limits.cleanup_interval_seconds)
+        maintenance = asyncio.create_task(maintain())
         try:
             yield
         finally:
+            maintenance.cancel()
+            await asyncio.gather(maintenance, return_exceptions=True)
             await game.close()
 
     app = Application(
         title="故事旧货铺 · 后端联调 API", version="0.2.0", lifespan=lifespan,
         description="支持探索联调与正式章节连续放映。先查看 /health 的 AI 模式与内容核对状态。所有写操作携带 UUID request_id 与当前 expected_version。",
-        responses={code: {"model": ErrorEnvelope} for code in (401, 403, 404, 409, 422, 429, 500, 502, 503, 504)},
+        responses={code: {"model": ErrorEnvelope} for code in (400, 401, 403, 404, 409, 413, 422, 429, 500, 502, 503, 504)},
     )
     app.state.game = game
+    app.state.limits = limits
     origins = [v.strip() for v in os.getenv("CORS_ORIGINS", "").split(",") if v.strip()]
     if "*" in origins:
         raise ValueError("CORS_ORIGINS 请填写具体前端来源")

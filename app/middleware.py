@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.datastructures import MutableHeaders
 
+from app.operations import OperationalMiddleware
+
 logger = logging.getLogger('story_shop')
 
 
@@ -40,8 +42,8 @@ class RequestContextMiddleware:
 class Application(FastAPI):
     def build_middleware_stack(self):
         cors = CORSMiddleware(
-            super().build_middleware_stack(), allow_origins=self.state.cors_origins,
+            OperationalMiddleware(super().build_middleware_stack(), self.state.limits), allow_origins=self.state.cors_origins,
             allow_credentials=False, allow_methods=['GET', 'POST'],
-            allow_headers=['Authorization', 'Content-Type'], expose_headers=['X-Request-ID'],
+            allow_headers=['Authorization', 'Content-Type'], expose_headers=['X-Request-ID', 'Retry-After'],
         )
         return RequestContextMiddleware(cors)

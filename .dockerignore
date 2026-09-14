@@ -5,5 +5,7 @@
 !app/**
 !stories/
 !stories/**
+!scripts/
+!scripts/**
 **/__pycache__/
 **/*.pyc
