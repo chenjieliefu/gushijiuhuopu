@@ -1,0 +1,21 @@
+{
+  "id": "integration-demo",
+  "version": "test-v1",
+  "is_test_fixture": true,
+  "title": "联调测试章节（非正式剧情）",
+  "item_name": "测试相机",
+  "opening": "这是后端联调场景，所有文字和规则仅用于测试。请先检查相机正面，再向我提问。",
+  "targets": {
+    "camera_front": {"label": "检查相机正面", "text": "测试线索 A：机身上贴着一张寄展标签。"},
+    "photo_back": {"label": "检查照片背面", "text": "测试线索 B：背面写着一段待确认的说明。"}
+  },
+  "facts": {
+    "demo_origin": {"text": "测试事实 A：这是一件受托送来的寄展物件。", "requires_clues": ["camera_front"], "requires_facts": []},
+    "demo_meaning": {"text": "测试事实 B：委托人希望通过寄展分享物件背后的经历。", "requires_clues": ["photo_back"], "requires_facts": ["demo_origin"]}
+  },
+  "core_facts": ["demo_origin", "demo_meaning"],
+  "pages": {
+    "demo_page": {"id": "demo_page", "title": "测试故事片段", "text": "这是预先配置的测试故事页。阅读状态与事实披露状态独立保存。", "requires_facts": ["demo_origin", "demo_meaning"]}
+  },
+  "collection_summary": "联调测试收藏：已完成两条测试事实的披露。正式概要由产品负责人提供。"
+}

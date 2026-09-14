@@ -1,8 +1,21 @@
+# Backend
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+/data/
+*.sqlite3*
+*.log
+
+# Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/test-results/
 frontend/playwright-report/
 frontend/*.tsbuildinfo
+
+# Local configuration
 .env
-.env.local
+.env.*
+!.env.example
 .DS_Store

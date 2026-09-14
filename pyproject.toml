@@ -1,0 +1,17 @@
+[project]
+name = "story-shop-backend"
+version = "0.1.0"
+description = "故事旧货铺后端联调底座"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.136.3",
+  "pydantic==2.13.4",
+  "uvicorn==0.48.0",
+]
+
+[dependency-groups]
+dev = ["pytest==9.1.0", "httpx==0.28.1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

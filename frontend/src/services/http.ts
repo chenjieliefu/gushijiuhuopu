@@ -8,7 +8,7 @@ import {
   type Request,
 } from "./contract";
 
-// Prepared against the checked-in contract. Live backend integration is deferred.
+// Validated against the local FastAPI test fixture; real AI and hosted deployment remain pending.
 export class HttpGateway implements Gateway {
   mode = "http" as const;
   constructor(

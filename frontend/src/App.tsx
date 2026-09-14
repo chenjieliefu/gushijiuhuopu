@@ -223,7 +223,7 @@ export default function App() {
         <span className="tiny-dot" />
         {gateway.mode === "mock"
           ? "本地交互样例 · 预设回应，尚未接入真实 AI"
-          : "服务接口模式 · 待完成实际联调验收"}
+          : "服务接口模式 · 测试剧情与模拟 AI"}
       </p>
       {!state ? (
         <main className="welcome">
@@ -284,7 +284,10 @@ export default function App() {
           <section className="chapter-heading">
             <div>
               <p className="eyebrow">
-                第一件旧物 <span className="line" /> 一段关于重逢的故事
+                第一件旧物 <span className="line" />{" "}
+                {gateway.mode === "mock"
+                  ? "一段关于重逢的故事"
+                  : "后端测试剧情"}
               </p>
               <h1>
                 {title}
@@ -382,7 +385,11 @@ export default function App() {
                   <h2>{complete ? "本次来访已结束" : "看山"}</h2>
                   <p>
                     <span className="tiny-dot" />
-                    {complete ? "故事已经有了归处" : "受苏晚之托，带着故事而来"}
+                    {complete
+                      ? "故事已经有了归处"
+                      : gateway.mode === "mock"
+                        ? "受苏晚之托，带着故事而来"
+                        : "受托讲述者 · 测试章节"}
                   </p>
                 </div>
                 <MessageCircle size={20} />
@@ -924,7 +931,10 @@ export default function App() {
                   <br />
                   留念
                 </span>
-                <small>No. 001 · 所有权属于苏晚</small>
+                <small>
+                  No. 001 ·{" "}
+                  {gateway.mode === "mock" ? "所有权属于苏晚" : "测试寄展物件"}
+                </small>
               </div>
               <div>
                 <p className="eyebrow">已接收寄展</p>
@@ -985,7 +995,11 @@ export default function App() {
               <br />
               你仍可回顾已发现的故事。
             </p>
-            <small>相机属于苏晚，我们只是替她保管这段时光。</small>
+            <small>
+              {gateway.mode === "mock"
+                ? "相机属于苏晚，我们只是替她保管这段时光。"
+                : "此处接收的是后端测试配置中的寄展物件。"}
+            </small>
             <div className="confirm-actions">
               <button className="secondary" onClick={close}>
                 再聊一会儿
@@ -1112,7 +1126,7 @@ export default function App() {
               <p>
                 {gateway.mode === "mock"
                   ? "这是前端独立交互样例。回应来自预设脚本，不是真实 AI；建议问题可走完整流程。样例剧情和占位美术等待产品、美术确认，进度保存在本浏览器。"
-                  : "当前通过服务接口展示进度。自由对话、剧情规则与保存结果取决于后端配置；真实联调仍需团队验收。"}
+                  : "当前通过服务接口展示进度。自由对话、剧情规则与保存结果取决于后端配置；本地测试章节已走通，正式剧情与真实 AI 仍需团队验收。"}
               </p>
             </div>
           </div>
