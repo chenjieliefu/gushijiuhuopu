@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from app.ai import ScriptedAI
 from app.main import create_app
+from app.limits import Limits
 from app.models import AIOutput, Story
 
 STORY_PATH = Path('stories/lost-sunshine.json')
@@ -67,7 +68,7 @@ def test_full_chapter_resume_restart_confirm_snapshot_and_reset(tmp_path):
     clock = Clock()
     db = tmp_path / 'chapter.sqlite3'
     def application():
-        return create_app(db, ai=ScriptedAI(), story_path=STORY_PATH, clock=clock)
+        return create_app(db, ai=ScriptedAI(), story_path=STORY_PATH, clock=clock, limits=Limits(requests_per_minute=10000))
     with TestClient(application()) as client:
         headers, state = session(client)
         assert state['phase'] == 'before_screening' and not state['can_collect']
