@@ -37,3 +37,7 @@
 - 对当前阶段完全匹配的已编写提问直接返回剧情台词；追加文字或混合任务仍进入模型检查。
 - 本机小样本实测：自由问答 4.05–7.48 秒，无关问题 1.14–2.40 秒，预置问题无需模型等待。这不是生产延迟承诺，也不能据此断言所有问题都比旧模型快。
 - 相关文档：https://ai.google.dev/gemini-api/docs/openai 、 https://ai.google.dev/gemini-api/docs/thinking 。
+
+## 公网版本（2026-09-15）
+
+[打开已上线作品](https://sda570na48o4l1bu14h9m.apigateway-cn-beijing.volceapi.com/)。Gemini 3.8 Flash 已在生产环境接通。固定看山和剧情配音已上线；新生成回答当前以文字呈现，动态语音服务未配置。资源与更新步骤见 [上线记录](2026-09-15-火山引擎部署准备.md)。

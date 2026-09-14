@@ -13,7 +13,8 @@ class GameAssets(StaticFiles):
         response = await super().get_response(path, scope)
         if response.status_code in (200, 206, 304):
             response.headers['Cache-Control'] = (
-                'public, max-age=31536000, immutable' if path.startswith('assets/')
+                'public, max-age=31536000, immutable'
+                if path.startswith('assets/') and path.count('/') == 1 and path.endswith(('.js', '.css'))
                 else 'public, max-age=3600'
             )
         return response
